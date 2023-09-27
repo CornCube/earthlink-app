@@ -23,10 +23,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun Main() {
     // add maps stuff here, it is the base. all rows and cols are over it.
+    MapView(
+        onLoad = { map ->
+            map.setMultiTouchControls(true)
+            map.controller.setZoom(9.0)
+        }
+    )
 
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
         MainMenu(onClick = { /*TODO: opens the main menu screen*/ })
@@ -46,6 +53,7 @@ fun MainMenu(onClick: () -> Unit) {
         elevation = FloatingActionButtonDefaults.elevation(
             defaultElevation = 0.dp
         ),
+        contentColor = Color.Black,
     ) {
         Icon(Icons.Filled.Menu, "Main menu")
     }

@@ -50,7 +50,8 @@ android {
 }
 
 dependencies {
-
+    implementation("org.osmdroid:osmdroid-android:6.1.17")
+    implementation("androidx.preference:preference-ktx:1.1.1")
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.7.0")
