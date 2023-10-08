@@ -1,12 +1,17 @@
 package com.example.earthlink
 
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -14,25 +19,33 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapController
+import org.osmdroid.views.overlay.Marker
+import java.util.regex.Pattern
 
-import androidx.compose.ui.res.*
-import androidx.compose.animation.*
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.runtime.LaunchedEffect
+@Composable
+fun ExampleForegroundLocationTrackerScreen() {
+    ForegroundLocationTracker(snackbarHostState = SnackbarHostState()){
+        Log.i("LogTag", "Current location is: $it")
+    }
+}
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -45,15 +58,29 @@ fun Main() {
     var isAddPostVisible by remember { mutableStateOf(false) }
     var isMenuOverlayVisible by remember { mutableStateOf(false) }
 
+    var mapController by remember { mutableStateOf<MapController?>(null) }
+
+    ForegroundLocationTracker(snackbarHostState = SnackbarHostState()) { location ->
+        // Get the latitude and longitude from the Location object
+        val latitude = location.latitude
+        val longitude = location.longitude
+
+        if (mapController != null) {
+            // Set the map center to the current location
+            val geoPoint = GeoPoint(latitude, longitude)
+            mapController?.setCenter(geoPoint)
+        }
+    }
+
     MapView(
         onLoad = { map ->
             map.setMultiTouchControls(true)
-            map.controller.setZoom(9.0)
+            map.controller.setZoom(20.0)
             map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
             // uncomment below to remove the zoom buttons
             // map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
 
-            // get the current location, and set the map to that location
+            mapController = map.controller as MapController?
         }
     )
 
