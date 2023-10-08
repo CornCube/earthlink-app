@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.res.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.runtime.LaunchedEffect
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -108,14 +109,13 @@ fun AddPost(onClick: () -> Unit) {
 
 @Composable
 fun AddPostModal(onDismissRequest: () -> Unit) {
-    // Define your AddPost modal UI here, e.g.,
-    // Dialog or some UI component to take post input
+    // TODO: Define AddPost modal UI here
 }
 
 @Composable
 fun MenuButton1(onClick: () -> Unit) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)  // Adds spacing between children
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         FloatingActionButton(
             modifier = Modifier.padding(bottom = 16.dp, end = 8.dp),
@@ -137,7 +137,7 @@ fun MenuButton1(onClick: () -> Unit) {
 @Composable
 fun MenuButton2(onClick: () -> Unit) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)  // Adds spacing between children
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         FloatingActionButton(
             modifier = Modifier.padding(bottom = 16.dp, end = 8.dp),
@@ -159,7 +159,7 @@ fun MenuButton2(onClick: () -> Unit) {
 @Composable
 fun MenuButton3(onClick: () -> Unit) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)  // Adds spacing between children
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         FloatingActionButton(
             modifier = Modifier.padding(end = 8.dp),
@@ -183,6 +183,12 @@ fun MenuOverlay(onDismissRequest: () -> Unit) {
     val visibleState = remember { MutableTransitionState(initialState = false) }
     visibleState.targetState = true
 
+    LaunchedEffect(Unit) {
+        if (!visibleState.targetState) {
+            visibleState.targetState = true
+        }
+    }
+
     AnimatedVisibility(
         visibleState = visibleState,
         enter = fadeIn(),
@@ -204,9 +210,9 @@ fun MenuOverlay(onDismissRequest: () -> Unit) {
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
             ) {
-                MenuButton1(onClick = { /* Handle button click */ })
-                MenuButton2(onClick = { /* Handle button click */ })
-                MenuButton3(onClick = { /* Handle button click */ })
+                MenuButton1(onClick = { /* TODO: Handle button click */ })
+                MenuButton2(onClick = { /* TODO: Handle button click */ })
+                MenuButton3(onClick = { /* TODO: Handle button click */ })
             }
         }
     }
