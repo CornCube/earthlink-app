@@ -56,19 +56,19 @@ fun Main() {
         }
     )
 
+    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
+        MainMenu(onClick = { isMenuOverlayVisible = true })
+    }
+    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+        AddPost(onClick = { isAddPostVisible = true })
+    }
+
     if (isAddPostVisible) {
         AddPostModal(onDismissRequest = { isAddPostVisible = false })
     }
 
     if (isMenuOverlayVisible) {
         MenuOverlay(onDismissRequest = { isMenuOverlayVisible = false })
-    }
-
-    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
-        MainMenu(onClick = { isMenuOverlayVisible = true })
-    }
-    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-        AddPost(onClick = { isAddPostVisible = true })
     }
 }
 
@@ -178,7 +178,6 @@ fun MenuButton3(onClick: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MenuOverlay(onDismissRequest: () -> Unit) {
     val visibleState = remember { MutableTransitionState(initialState = false) }
