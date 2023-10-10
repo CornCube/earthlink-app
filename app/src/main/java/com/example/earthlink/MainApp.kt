@@ -1,7 +1,9 @@
 package com.example.earthlink
 
+import android.app.Activity
 import android.util.Log
 import android.widget.Toast
+import android.graphics.Rect
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -32,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -39,6 +43,14 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapController
 import org.osmdroid.views.overlay.Marker
 import java.util.regex.Pattern
+
+import org.osmdroid.api.IMapController
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
 @Composable
 fun ExampleForegroundLocationTrackerScreen() {
@@ -55,37 +67,37 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun Main() {
+    lateinit var mMyLocationOverlay: MyLocationNewOverlay;
+    val context = LocalContext.current
+
     var isAddPostVisible by remember { mutableStateOf(false) }
     var isMenuOverlayVisible by remember { mutableStateOf(false) }
-
-    var mapController by remember { mutableStateOf<MapController?>(null) }
-
-    ForegroundLocationTracker(snackbarHostState = SnackbarHostState()) { location ->
-        // Get the latitude and longitude from the Location object
-        val latitude = location.latitude
-        val longitude = location.longitude
-
-        if (mapController != null) {
-            // Set the map center to the current location
-            val geoPoint = GeoPoint(latitude, longitude)
-            mapController?.setCenter(geoPoint)
-        }
-    }
 
     MapView(
         onLoad = { map ->
             map.setMultiTouchControls(true)
             map.controller.setZoom(20.0)
             map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
+            map.mapCenter
+            map.getLocalVisibleRect(Rect())
             // uncomment below to remove the zoom buttons
             // map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
 
-            mapController = map.controller as MapController?
+            mMyLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
+            mMyLocationOverlay.enableMyLocation()
+            mMyLocationOverlay.enableFollowLocation()
+            mMyLocationOverlay.isDrawAccuracyEnabled = false // gps accuracy circle
+            map.controller.animateTo(mMyLocationOverlay.myLocation)
+
+            map.overlays.add(mMyLocationOverlay)
         }
     )
 
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
         MainMenu(onClick = { isMenuOverlayVisible = true })
+    }
+    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+        LocationButton(onClick = { /* TODO: Snap to current location */ })
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         AddPost(onClick = { isAddPostVisible = true })
@@ -120,15 +132,31 @@ fun MainMenu(onClick: () -> Unit) {
 }
 
 @Composable
+fun LocationButton(onClick: () -> Unit) {
+    FloatingActionButton(
+        modifier = Modifier
+            .padding(bottom = 100.dp, end = 16.dp),
+        onClick = { onClick() },
+        // containerColor = Color.White,
+        shape = CircleShape,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.my_location_24px),
+            contentDescription = "Location button"
+        )
+    }
+}
+
+@Composable
 fun AddPost(onClick: () -> Unit) {
     FloatingActionButton(
         modifier = Modifier
             .padding(bottom = 16.dp, end = 16.dp),
         onClick = { onClick() },
-        shape = CircleShape,
+        // containerColor = Color.LightGray,
     ) {
         Icon(
-            painter = painterResource(R.drawable.add_24px),
+            painter = painterResource(R.drawable.edit_24px),
             contentDescription = "Add button"
         )
     }
