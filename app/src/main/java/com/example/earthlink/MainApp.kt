@@ -49,6 +49,7 @@ import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.TilesOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
@@ -78,6 +79,10 @@ fun Main() {
             map.setMultiTouchControls(true)
             map.controller.setZoom(20.0)
             map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
+
+            // sudo dark mode
+            map.overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS);
+
             map.mapCenter
             map.getLocalVisibleRect(Rect())
             // uncomment below to remove the zoom buttons
@@ -122,7 +127,7 @@ fun MainMenu(onClick: () -> Unit) {
         elevation = FloatingActionButtonDefaults.elevation(
             defaultElevation = 0.dp
         ),
-        contentColor = Color.Black,
+        contentColor = Color.White,
     ) {
         Icon(
             painter = painterResource(R.drawable.menu_24px),
@@ -137,12 +142,13 @@ fun LocationButton(onClick: () -> Unit) {
         modifier = Modifier
             .padding(bottom = 100.dp, end = 16.dp),
         onClick = { onClick() },
-        // containerColor = Color.White,
+        containerColor = Color(0xff2a2b2d),
         shape = CircleShape,
     ) {
         Icon(
             painter = painterResource(R.drawable.my_location_24px),
-            contentDescription = "Location button"
+            contentDescription = "Location button",
+            tint = Color(0xff8fa8ea)
         )
     }
 }
@@ -153,7 +159,7 @@ fun AddPost(onClick: () -> Unit) {
         modifier = Modifier
             .padding(bottom = 16.dp, end = 16.dp),
         onClick = { onClick() },
-        // containerColor = Color.LightGray,
+        containerColor = Color(0xff99b1ed),
     ) {
         Icon(
             painter = painterResource(R.drawable.edit_24px),
@@ -176,6 +182,7 @@ fun MenuButton1(onClick: () -> Unit) {
             modifier = Modifier.padding(bottom = 16.dp, end = 8.dp),
             onClick = { onClick() },
             shape = CircleShape,
+            containerColor = Color(0xff99b1ed),
         ) {
             Icon(
                 painter = painterResource(R.drawable.person_24px),
@@ -184,7 +191,8 @@ fun MenuButton1(onClick: () -> Unit) {
         }
         Text(
             "Profile",
-            modifier = Modifier.offset(y = 16.dp)
+            modifier = Modifier.offset(y = 16.dp),
+            color = Color(0xff99b1ed)
         )
     }
 }
@@ -198,6 +206,7 @@ fun MenuButton2(onClick: () -> Unit) {
             modifier = Modifier.padding(bottom = 16.dp, end = 8.dp),
             onClick = { onClick() },
             shape = CircleShape,
+            containerColor = Color(0xff99b1ed),
         ) {
             Icon(
                 painter = painterResource(R.drawable.group_24px),
@@ -206,7 +215,8 @@ fun MenuButton2(onClick: () -> Unit) {
         }
         Text(
             "Friends",
-            modifier = Modifier.offset(y = 16.dp)
+            modifier = Modifier.offset(y = 16.dp),
+            color = Color(0xff99b1ed)
         )
     }
 }
@@ -220,6 +230,7 @@ fun MenuButton3(onClick: () -> Unit) {
             modifier = Modifier.padding(end = 8.dp),
             onClick = { onClick() },
             shape = CircleShape,
+            containerColor = Color(0xff99b1ed),
         ) {
             Icon(
                 painter = painterResource(R.drawable.settings_24px),
@@ -228,7 +239,8 @@ fun MenuButton3(onClick: () -> Unit) {
         }
         Text(
             "Settings",
-            modifier = Modifier.offset(y = 16.dp)
+            modifier = Modifier.offset(y = 16.dp),
+            color = Color(0xff99b1ed)
         )
     }
 }
