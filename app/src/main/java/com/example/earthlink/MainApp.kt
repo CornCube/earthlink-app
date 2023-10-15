@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapController
@@ -62,7 +63,7 @@ fun ExampleForegroundLocationTrackerScreen() {
 }
 
 @Composable
-fun Main() {
+fun Main(navigation: NavController) {
     lateinit var mMyLocationOverlay: MyLocationNewOverlay;
     val context = LocalContext.current
     var map by remember { mutableStateOf<MapView?>(null) }
@@ -122,7 +123,7 @@ fun Main() {
     }
 
     if (isMenuOverlayVisible) {
-        MenuOverlay(onDismissRequest = { isMenuOverlayVisible = false })
+        MenuOverlay(onDismissRequest = { isMenuOverlayVisible = false }, navigation = navigation)
     }
 }
 
@@ -257,7 +258,7 @@ fun MenuButton3(onClick: () -> Unit) {
 }
 
 @Composable
-fun MenuOverlay(onDismissRequest: () -> Unit) {
+fun MenuOverlay(onDismissRequest: () -> Unit, navigation: NavController) {
     val visibleState = remember { MutableTransitionState(initialState = false) }
     visibleState.targetState = true
 
@@ -288,9 +289,9 @@ fun MenuOverlay(onDismissRequest: () -> Unit) {
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
             ) {
-                MenuButton1(onClick = { /* TODO: Handle button click */ })
-                MenuButton2(onClick = { /* TODO: Handle button click */ })
-                MenuButton3(onClick = { /* TODO: Handle button click */ })
+                MenuButton1(onClick = { navigation.navigate("ProfileScreen") })
+                MenuButton2(onClick = { navigation.navigate("FriendsScreen") })
+                MenuButton3(onClick = { navigation.navigate("SettingsScreen") })
             }
         }
     }

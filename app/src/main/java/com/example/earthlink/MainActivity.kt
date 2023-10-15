@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.earthlink.ui.theme.EarthLinkTheme
 
 class MainActivity : ComponentActivity() {
@@ -27,7 +30,21 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Main()
+                    val navController = rememberNavController()
+                    NavHost(navController = navController, startDestination = "HomeScreen") {
+                        composable("HomeScreen") {
+                            Main(navigation = navController)
+                        }
+//                        composable("ProfileScreen") {
+//                            ProfileScreen(navigation = navController)
+//                        }
+//                        composable("FriendScreen") {
+//                            FriendScreen(navigation = navController)
+//                        }
+//                        composable("SettingsScreen") {
+//                            SettingsScreen(navigation = navController)
+//                        }
+                    }
                 }
             }
         }
