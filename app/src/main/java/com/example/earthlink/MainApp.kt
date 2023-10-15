@@ -48,6 +48,7 @@ import org.osmdroid.api.IMapController
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
+import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.TilesOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
@@ -60,41 +61,47 @@ fun ExampleForegroundLocationTrackerScreen() {
     }
 }
 
-sealed class Screen(val route: String) {
-    object Login : Screen("login")
-    object Main : Screen("main")
-    object AddPost : Screen("addPost")
-}
-
 @Composable
 fun Main() {
     lateinit var mMyLocationOverlay: MyLocationNewOverlay;
     val context = LocalContext.current
+    var map by remember { mutableStateOf<MapView?>(null) }
 
     var isAddPostVisible by remember { mutableStateOf(false) }
     var isMenuOverlayVisible by remember { mutableStateOf(false) }
+    var isMapCenteredOnLocation by remember { mutableStateOf(true) }
 
     MapView(
-        onLoad = { map ->
-            map.setMultiTouchControls(true)
-            map.controller.setZoom(20.0)
-            map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
+        onLoad = { loadedMap ->
+            loadedMap.apply {
+                setMultiTouchControls(true)
+                controller.setZoom(20.0)
+                setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
+                overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
 
-            // sudo dark mode
-            map.overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS);
+                mMyLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), this)
+                mMyLocationOverlay.enableMyLocation()
+                mMyLocationOverlay.enableFollowLocation()
+                mMyLocationOverlay.isDrawAccuracyEnabled = false
+                controller.animateTo(mMyLocationOverlay.myLocation)
 
-            map.mapCenter
-            map.getLocalVisibleRect(Rect())
-            // uncomment below to remove the zoom buttons
-            // map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
+                overlays.add(mMyLocationOverlay)
 
-            mMyLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
-            mMyLocationOverlay.enableMyLocation()
-            mMyLocationOverlay.enableFollowLocation()
-            mMyLocationOverlay.isDrawAccuracyEnabled = false // gps accuracy circle
-            map.controller.animateTo(mMyLocationOverlay.myLocation)
+                addMapListener(object : MapListener {
+                    override fun onScroll(event: ScrollEvent?): Boolean {
+                        isMapCenteredOnLocation = false
+                        return true
+                    }
 
-            map.overlays.add(mMyLocationOverlay)
+                    override fun onZoom(event: ZoomEvent?): Boolean {
+                        isMapCenteredOnLocation = false
+                        return true
+                    }
+                })
+            }
+
+            // Update the map state
+            map = loadedMap
         }
     )
 
@@ -102,7 +109,9 @@ fun Main() {
         MainMenu(onClick = { isMenuOverlayVisible = true })
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-        LocationButton(onClick = { /* TODO: Snap to current location */ })
+        LocationButton(isMapCentered = isMapCenteredOnLocation, onClick = {
+            map?.controller?.animateTo(mMyLocationOverlay.myLocation)
+        })
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         AddPost(onClick = { isAddPostVisible = true })
@@ -137,7 +146,9 @@ fun MainMenu(onClick: () -> Unit) {
 }
 
 @Composable
-fun LocationButton(onClick: () -> Unit) {
+fun LocationButton(isMapCentered: Boolean, onClick: () -> Unit) {
+    val iconResource = if (isMapCentered) R.drawable.my_location_24px else R.drawable.location_searching_24px
+    val iconColor = if (isMapCentered) Color(0xff8fa8ea) else Color(0xffe5ecf2)
     FloatingActionButton(
         modifier = Modifier
             .padding(bottom = 100.dp, end = 16.dp),
@@ -146,9 +157,9 @@ fun LocationButton(onClick: () -> Unit) {
         shape = CircleShape,
     ) {
         Icon(
-            painter = painterResource(R.drawable.my_location_24px),
+            painter = painterResource(iconResource),
             contentDescription = "Location button",
-            tint = Color(0xff8fa8ea)
+            tint = iconColor
         )
     }
 }
