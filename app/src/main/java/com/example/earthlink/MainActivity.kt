@@ -35,15 +35,15 @@ class MainActivity : ComponentActivity() {
                         composable("HomeScreen") {
                             Main(navigation = navController)
                         }
-//                        composable("ProfileScreen") {
-//                            ProfileScreen(navigation = navController)
-//                        }
-//                        composable("FriendScreen") {
-//                            FriendScreen(navigation = navController)
-//                        }
-//                        composable("SettingsScreen") {
-//                            SettingsScreen(navigation = navController)
-//                        }
+                        composable("ProfileScreen") {
+                            ProfileScreen(navigation = navController)
+                        }
+                        composable("FriendScreen") {
+                            FriendScreen(navigation = navController)
+                        }
+                        composable("SettingsScreen") {
+                            SettingsScreen(navigation = navController)
+                        }
                     }
                 }
             }
