@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -61,6 +62,7 @@ fun ExampleForegroundLocationTrackerScreen() {
         Log.i("LogTag", "Current location is: $it")
     }
 }
+
 
 @Composable
 fun Main(navigation: NavController) {
