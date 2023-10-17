@@ -61,9 +61,13 @@ val headerSize = 28.sp
 val verticalSpacing = 8.dp
 val contentPadding = 15.dp
 
+
+//main screen for settings screen, calls other composables
 @Composable
 fun SettingsScreen(navigation: NavController) {
 
+    //Scaffold is the overall layout of the page, including topbar, floating action button, and
+    //body components that make up the page
     Scaffold(
         topBar = {
             TopBar()
@@ -90,7 +94,7 @@ fun SettingsScreen(navigation: NavController) {
     }
 }
 
-
+//Composable component for the topbar of the screen
 @Composable
 fun TopBar(){
     Surface(color = Color.LightGray.copy(alpha = 0.7f)){
@@ -105,7 +109,7 @@ fun TopBar(){
 
 }
 
-
+//Composable component for the account portion of the settings
 @Composable
 fun AccountSettings(){
     SettingHeader(text = "Account")
@@ -118,7 +122,7 @@ fun AccountSettings(){
 
 
 
-
+//Composable component for the notification portion of the settings
 @Composable
 fun Notification(){
     SettingHeader(text = "Notifications")
@@ -131,17 +135,18 @@ fun Notification(){
 
 }
 
+//Composable component for the appearance portion of the settings
 @Composable
 fun Appearance() {
     SettingHeader(text = "Appearance")
     HelperCheckBox(text = "Dark Mode")
     HelperCheckBox(text = "Theme 1")
     HelperCheckBox(text = "Theme 2")
-    /* TODO: Include or remove? Changing themes and stuff */
     Spacer(Modifier.height(12.dp))
 
 }
 
+//Composable component for the help and support portion of the settings
 @Composable
 fun HelpSupport(){
     SettingHeader(text = "Help and Support")
@@ -149,11 +154,9 @@ fun HelpSupport(){
     HelperButton(text = "Contact Support")
     HelperButton(text = "Report")
     Spacer(Modifier.height(12.dp))
-
-
-    /* TODO: Put some random placeholders for help contact */
 }
 
+//Composable component for the about portion of the settings
 @Composable
 fun About(){
     SettingHeader(text = "About")
@@ -161,11 +164,9 @@ fun About(){
     HelperButton(text = "Terms of Services")
 
     Spacer(Modifier.height(12.dp))
-
-
-    /* TODO: Add some random about things maybe route to about page*/
 }
 
+//Component for the exit button to go back to the home screen
 @Composable
 fun ExitButton(navigation: NavController){
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
@@ -184,7 +185,7 @@ fun ExitButton(navigation: NavController){
     }
 }
 
-
+//Helper function to create the header for each portion of the settings
 @Composable
 fun SettingHeader(text: String){
     Text(text=text, fontSize = headerSize)
@@ -193,6 +194,7 @@ fun SettingHeader(text: String){
     Spacer(modifier = Modifier.height(8.dp))
 }
 
+//Helper function that creates a button for style consistency
 @Composable
 fun HelperButton(text: String){
     OutlinedButton(
@@ -203,6 +205,7 @@ fun HelperButton(text: String){
     }
 }
 
+//Helper function that creates a checkbox
 @Composable
 fun HelperCheckBox(text: String){
 

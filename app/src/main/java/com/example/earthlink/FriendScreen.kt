@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
+//Main Composable for the Friend screen. Includes 3 tabs: Friend list, search friend, and friend
+//requests
 @Composable
 fun FriendScreen(navigation: NavController) {
     Column(
@@ -50,6 +52,7 @@ fun FriendScreen(navigation: NavController) {
     BackButton(navigation = navigation)
 }
 
+//Composable for the tab to switch between screens for friend feature
 @Composable
 fun CustomTabs(content: @Composable (selectedIndex: Int) -> Unit) {
     var selectedIndex = remember { mutableStateOf(0) }
@@ -84,6 +87,8 @@ fun CustomTabs(content: @Composable (selectedIndex: Int) -> Unit) {
     }
 }
 
+
+//Friends list feature of friends
 @Composable
 fun FriendsList() {
     val friends = listOf("Alice", "Bob", "Charlie", "David","Alice", "Bob",
@@ -124,6 +129,8 @@ fun FriendsList() {
         }
     }
 }
+
+//Component that builds the search friends portion
 @Composable
 fun SearchFriends() {
     var searchText = remember { mutableStateOf("") }
@@ -171,6 +178,8 @@ fun SearchFriends() {
         }
     }
 }
+
+//Composable that builds the friends request list
 @Composable
 fun FriendRequestsList() {
     val requests = listOf("Ian", "Jack", "Katie", "Leo")  // Sample data
@@ -207,6 +216,7 @@ fun FriendRequestsList() {
     }
 }
 
+//Helper to create the button to go back to the home screen
 @Composable
 fun BackButton(navigation: NavController){
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
