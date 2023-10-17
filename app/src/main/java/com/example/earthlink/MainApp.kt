@@ -292,7 +292,7 @@ fun MenuOverlay(onDismissRequest: () -> Unit, navigation: NavController) {
                     .padding(16.dp)
             ) {
                 MenuButton1(onClick = { navigation.navigate("ProfileScreen") })
-                MenuButton2(onClick = { navigation.navigate("FriendsScreen") })
+                MenuButton2(onClick = { navigation.navigate("FriendScreen") })
                 MenuButton3(onClick = { navigation.navigate("SettingsScreen") })
             }
         }
