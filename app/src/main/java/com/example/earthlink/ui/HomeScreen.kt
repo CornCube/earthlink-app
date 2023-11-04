@@ -1,9 +1,5 @@
-package com.example.earthlink
+package com.example.earthlink.ui
 
-import android.app.Activity
-import android.util.Log
-import android.widget.Toast
-import android.graphics.Rect
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
@@ -18,16 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,83 +29,51 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapController
-import org.osmdroid.views.overlay.Marker
-import java.util.regex.Pattern
-
-import org.osmdroid.api.IMapController
-import org.osmdroid.events.MapListener
-import org.osmdroid.events.ScrollEvent
-import org.osmdroid.events.ZoomEvent
-import org.osmdroid.views.CustomZoomButtonsController
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.TilesOverlay
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-
-@Composable
-fun ExampleForegroundLocationTrackerScreen() {
-    ForegroundLocationTracker(snackbarHostState = SnackbarHostState()){
-        Log.i("LogTag", "Current location is: $it")
-    }
-}
+import androidx.navigation.NavHostController
+import com.example.earthlink.R
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 
 @Composable
-fun Main(navigation: NavController) {
-    lateinit var mMyLocationOverlay: MyLocationNewOverlay;
+fun Main(navigation: NavHostController) {
+//    lateinit var mMyLocationOverlay: MyLocationNewOverlay;
     val context = LocalContext.current
-    var map by remember { mutableStateOf<MapView?>(null) }
+//    var map by remember { mutableStateOf<MapView?>(null) }
 
     var isAddPostVisible by remember { mutableStateOf(false) }
     var isMenuOverlayVisible by remember { mutableStateOf(false) }
     var isMapCenteredOnLocation by remember { mutableStateOf(true) }
 
-    MapView(
-        onLoad = { loadedMap ->
-            loadedMap.apply {
-                setMultiTouchControls(true)
-                controller.setZoom(20.0)
-                setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
-                overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
+    // initialize google map view at user's location
+    val singapore = LatLng(1.35, 103.87)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(singapore, 10f)
+    }
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState
+    ) {
+        Marker(
+            state = MarkerState(position = singapore),
+            title = "Singapore",
+            snippet = "Marker in Singapore"
+        )
+    }
 
-                mMyLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), this)
-                mMyLocationOverlay.enableMyLocation()
-                mMyLocationOverlay.enableFollowLocation()
-                mMyLocationOverlay.isDrawAccuracyEnabled = false
-                controller.animateTo(mMyLocationOverlay.myLocation)
-
-                overlays.add(mMyLocationOverlay)
-
-                addMapListener(object : MapListener {
-                    override fun onScroll(event: ScrollEvent?): Boolean {
-                        isMapCenteredOnLocation = false
-                        return true
-                    }
-
-                    override fun onZoom(event: ZoomEvent?): Boolean {
-                        isMapCenteredOnLocation = false
-                        return true
-                    }
-                })
-            }
-
-            // Update the map state
-            map = loadedMap
-        }
-    )
 
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
         MainMenu(onClick = { isMenuOverlayVisible = true })
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         LocationButton(isMapCentered = isMapCenteredOnLocation, onClick = {
-            map?.controller?.animateTo(mMyLocationOverlay.myLocation)
+//            map?.controller?.animateTo(mMyLocationOverlay.myLocation)
         })
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
