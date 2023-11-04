@@ -60,6 +60,9 @@ class MainActivity : ComponentActivity() {
                         composable("SettingsScreen") {
                             SettingsScreen(navigation = navController)
                         }
+                        composable("EditProfileScreen"){
+                            EditProfileScreen(navigation = navController)
+                        }
                     }
                 }
             }

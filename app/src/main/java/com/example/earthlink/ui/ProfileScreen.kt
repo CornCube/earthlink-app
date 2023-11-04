@@ -1,7 +1,14 @@
 package com.example.earthlink.ui
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Bitmap
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,16 +23,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -33,10 +45,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.earthlink.R
+import androidx.compose.foundation.clickable
+
 
 @Composable
 fun ProfileScreen(navigation: NavController) {
-    EditProfileButton()
+    EditProfileButton(navigation)
     ReturnToHomeButton(navigation)
     Column {
         Row(
@@ -78,17 +92,37 @@ fun ProfileScreen(navigation: NavController) {
 
 @Composable
 fun ProfilePicture() {
-    // You can replace the Image with your actual profile picture.
-    Image(
-        painter = painterResource(R.drawable.person_24px), // Replace with your image resource
-        contentDescription = "Profile Picture",
-        modifier = Modifier
-            .size(100.dp)
-            .clip(RoundedCornerShape(12.dp)) // Adjust the corner radius as needed
-            .background(Color.LightGray)
-    )
-}
+    val context = LocalContext.current
+    val profilePictureState = remember { mutableStateOf<Bitmap?>(null) }
 
+    // Launcher to pick an image from the gallery
+    val galleryLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val imageUri = result.data?.data
+            imageUri?.let {
+                val imageBitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+                profilePictureState.value = imageBitmap
+            }
+        }
+    }
+
+    // Display the profile picture or a default placeholder if none exists
+    Box(
+        modifier = Modifier.clickable {
+            val pickImageIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            galleryLauncher.launch(pickImageIntent)
+        }
+    ) {
+        profilePictureState.value?.let {
+            Image(bitmap = it.asImageBitmap(), contentDescription = "User Profile Picture")
+        } ?: Image( painter = painterResource(R.drawable.person_24px), // Replace with your image resource
+            contentDescription = "Profile Picture",
+            modifier = Modifier
+                .size(100.dp)
+                .clip(RoundedCornerShape(12.dp)) // Adjust the corner radius as needed
+                .background(Color.LightGray))
+    }
+}
 
 @Composable
 fun UserInfo() {
@@ -113,12 +147,12 @@ fun UserInfo() {
 }
 
 @Composable
-fun EditProfileButton() {
+fun EditProfileButton(navigation: NavController) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
     FloatingActionButton(
-        onClick = { /* TODO: Navigate to the edit profile screen */ },
+        onClick = {navigation.navigate("EditProfileScreen")},
         modifier = Modifier
             .padding(top = 16.dp, bottom = screenHeight - 64.dp, start = screenWidth - 64.dp, end = 16.dp),
         containerColor = Color(0xff99b1ed),
@@ -228,7 +262,5 @@ fun PostCard(post: Post) {
         }
     }
 }
-
-
 
 
