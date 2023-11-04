@@ -65,6 +65,9 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Settings.route) { SettingsScreen(navigation = navController) }
                             // Add other composable destinations as needed here
                         }
+                        composable("EditProfileScreen"){
+                            EditProfileScreen(navigation = navController)
+                        }
                     }
                 }
             }
