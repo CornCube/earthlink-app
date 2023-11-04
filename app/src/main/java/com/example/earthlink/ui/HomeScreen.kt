@@ -1,15 +1,20 @@
 package com.example.earthlink.ui
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.*
 import androidx.navigation.NavHostController
 import com.example.earthlink.R
@@ -120,13 +125,12 @@ fun LocationButton(cameraPositionState: CameraPositionState, context: Context) {
     }
 }
 
-
-
 @Composable
 fun AddPost(onClick: () -> Unit) {
+    var showAddPostModal by remember { mutableStateOf(false) }
+
     FloatingActionButton(
-        modifier = Modifier
-            .padding(bottom = 16.dp, end = 16.dp),
+        modifier = Modifier.padding(bottom = 16.dp, end = 16.dp),
         onClick = { onClick() },
         containerColor = Color(0xff99b1ed),
     ) {
@@ -135,9 +139,68 @@ fun AddPost(onClick: () -> Unit) {
             contentDescription = "Add button"
         )
     }
+
+    if (showAddPostModal) {
+        AddPostModal(onDismissRequest = { showAddPostModal = false })
+    }
 }
 
 @Composable
 fun AddPostModal(onDismissRequest: () -> Unit) {
-    // TODO: Define AddPost modal UI here
+    var showDialog by remember { mutableStateOf(true) }
+
+    if (showDialog) {
+        MessagePopup(
+            onDismissRequest = {
+                showDialog = false
+                onDismissRequest()
+            },
+            onPostClick = { message ->
+                println("Posted message: $message")
+                showDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) -> Unit) {
+    var textState by remember { mutableStateOf("") }
+
+    Dialog(onDismissRequest = onDismissRequest) {
+        // Card composable used to create a card-like box around the content
+        Card(
+            modifier = Modifier.padding(16.dp),
+            elevation = cardElevation(8.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = "Write your message")
+                Spacer(modifier = Modifier.height(8.dp))
+                // Material Design TextField from Material3
+                TextField(
+                    value = textState,
+                    onValueChange = { textState = it },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.End) {
+                    Button(onClick = onDismissRequest) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(onClick = {
+                        onPostClick(textState)
+                        onDismissRequest()
+                    }) {
+                        Text("Post")
+                    }
+                }
+            }
+        }
+    }
 }
