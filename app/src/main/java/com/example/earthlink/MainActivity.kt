@@ -4,24 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.earthlink.ui.FriendScreen
-import com.example.earthlink.ui.Main
-import com.example.earthlink.ui.ProfileScreen
-import com.example.earthlink.ui.SettingsScreen
-import com.example.earthlink.ui.LoginScreen
+import androidx.navigation.compose.*
+import com.example.earthlink.ui.*
 import com.example.earthlink.ui.theme.EarthLinkTheme
-import com.example.earthlink.utils.checkForPermission
+import com.example.earthlink.utils.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,26 +29,41 @@ class MainActivity : ComponentActivity() {
                         mutableStateOf(checkForPermission(this))
                     }
 
-                    NavHost(navController = navController, startDestination = "LoginScreen") {
-                        composable("LoginScreen") {
-                            LoginScreen(
-                                onPermissionGranted = {
-                                    hasLocationPermission = true
-                                    navController.navigate("HomeScreen")
-                                }
-                            )
+                    // Determine if the bottom bar should be shown
+                    val shouldShowBottomBar = navController.currentBackStackEntryAsState().value?.destination?.route in listOf(
+                        Screen.Home.route,
+                        Screen.Friends.route,
+                        Screen.Profile.route,
+                        Screen.Settings.route
+                    )
+
+                    Scaffold(
+                        bottomBar = {
+                            if (shouldShowBottomBar) {
+                                BottomNavigationBar(navController = navController)
+                            }
                         }
-                        composable("HomeScreen") {
-                            Main(navigation = navController)
-                        }
-                        composable("ProfileScreen") {
-                            ProfileScreen(navigation = navController)
-                        }
-                        composable("FriendScreen") {
-                            FriendScreen(navigation = navController)
-                        }
-                        composable("SettingsScreen") {
-                            SettingsScreen(navigation = navController)
+                    ) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = "LoginScreen",
+                            Modifier.padding(innerPadding)
+                        ) {
+                            composable("LoginScreen") {
+                                LoginScreen(
+                                    onPermissionGranted = {
+                                        hasLocationPermission = true
+                                        navController.navigate(Screen.Home.route) {
+                                            popUpTo("LoginScreen") { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable(Screen.Home.route) { Main(navigation = navController) }
+                            composable(Screen.Profile.route) { ProfileScreen(navigation = navController) }
+                            composable(Screen.Friends.route) { FriendScreen(navigation = navController) }
+                            composable(Screen.Settings.route) { SettingsScreen(navigation = navController) }
+                            // Add other composable destinations as needed here
                         }
                     }
                 }

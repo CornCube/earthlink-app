@@ -69,7 +69,6 @@ fun getCurrentLocation(context: Context, onLocationFetched: (location: LatLng) -
             // Handle failure to get location
             Log.d("MAP-EXCEPTION",exception.message.toString())
         }
-
 }
 
 fun bitmapDescriptor(
