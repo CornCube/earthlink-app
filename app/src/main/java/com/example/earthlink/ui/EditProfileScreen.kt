@@ -1,4 +1,4 @@
-package com.example.earthlink
+package com.example.earthlink.ui
 
 import android.app.Activity
 import android.content.Intent
@@ -31,7 +31,7 @@ fun EditProfileScreen(navigation: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        UpdateProfilePicture() // Use the UpdateProfilePicture composable you already have
+        UpdateProfilePicture()
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -40,7 +40,6 @@ fun EditProfileScreen(navigation: NavController) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(onClick = {
-            // Handle saving changes, then navigate back or to another destination
             navigation.popBackStack()
         }) {
             Text("Save Changes")

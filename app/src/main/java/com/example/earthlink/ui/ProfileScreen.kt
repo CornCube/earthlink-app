@@ -6,52 +6,26 @@ import android.graphics.Bitmap
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Text
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.earthlink.R
-import androidx.compose.foundation.clickable
-
 
 @Composable
 fun ProfileScreen(navigation: NavController) {
-    EditProfileButton(navigation)
-    ReturnToHomeButton(navigation)
     Column {
         Row(
             modifier = Modifier
@@ -69,7 +43,7 @@ fun ProfileScreen(navigation: NavController) {
                 .padding(16.dp)
         ) {
             Box(
-                modifier = Modifier.padding(8.dp), // Add internal padding here
+                modifier = Modifier.padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 UserMilestones()
@@ -81,12 +55,15 @@ fun ProfileScreen(navigation: NavController) {
                 .padding(16.dp)
         ) {
             Box(
-                modifier = Modifier.padding(8.dp), // Add internal padding here
+                modifier = Modifier.padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 TopPosts()
             }
         }
+    }
+    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+        EditProfileButton(navigation = navigation)
     }
 }
 
@@ -115,11 +92,11 @@ fun ProfilePicture() {
     ) {
         profilePictureState.value?.let {
             Image(bitmap = it.asImageBitmap(), contentDescription = "User Profile Picture")
-        } ?: Image( painter = painterResource(R.drawable.person_24px), // Replace with your image resource
+        } ?: Image( painter = painterResource(R.drawable.person_24px),
             contentDescription = "Profile Picture",
             modifier = Modifier
                 .size(100.dp)
-                .clip(RoundedCornerShape(12.dp)) // Adjust the corner radius as needed
+                .clip(RoundedCornerShape(12.dp)) // corner radius
                 .background(Color.LightGray))
     }
 }
@@ -152,31 +129,13 @@ fun EditProfileButton(navigation: NavController) {
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
     FloatingActionButton(
-        onClick = {navigation.navigate("EditProfileScreen")},
+        onClick = { navigation.navigate("EditProfileScreen") },
         modifier = Modifier
-            .padding(top = 16.dp, bottom = screenHeight - 64.dp, start = screenWidth - 64.dp, end = 16.dp),
+            .padding(bottom = 16.dp, end = 16.dp),
         containerColor = Color(0xff99b1ed),
     ) {
         Icon(
             painter = painterResource(R.drawable.edit_24px),
-            contentDescription = "Edit Profile"
-        )
-    }
-}
-
-@Composable
-fun ReturnToHomeButton(navigation: NavController) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val screenHeight = configuration.screenHeightDp.dp
-    FloatingActionButton(
-        onClick = { navigation.navigate("HomeScreen") },
-        modifier = Modifier
-            .padding(bottom = 16.dp, top = screenHeight - 64.dp, end = screenWidth - 64.dp, start = 16.dp),
-        containerColor = Color(0xff99b1ed),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.close_24px),
             contentDescription = "Edit Profile"
         )
     }
@@ -195,7 +154,6 @@ fun UserMilestones() {
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Replace with your achievement icon
                 Icon(
                     painter = painterResource(R.drawable.trophy_24px),
                     contentDescription = "Achievement Icon",
@@ -250,7 +208,7 @@ val posts = listOf(
 fun PostCard(post: Post) {
     Card(
         modifier = Modifier
-            .width(200.dp) // Adjust the width as needed
+            .width(200.dp)
             .padding(8.dp)
     ) {
         Column(
