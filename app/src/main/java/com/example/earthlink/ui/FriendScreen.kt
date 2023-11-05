@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TabPosition
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,7 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.*
 import com.example.earthlink.R
+
 
 
 //Main Composable for the Friend screen. Includes 3 tabs: Friend list, search friend, and friend
@@ -33,27 +37,29 @@ import com.example.earthlink.R
 @Composable
 fun FriendScreen(navigation: NavController) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(all = 0.dp)
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CustomTabs { selectedIndex ->
             when (selectedIndex) {
-                0 -> FriendsList()
-                1 -> SearchFriends()
-                2 -> FriendRequestsList()
+                0 -> FriendsList(navigation)
+                1 -> FriendRequestsList(navigation)
+                2 -> SearchFriends(navigation)
+
             }
         }
+        BackButton(navigation)
     }
-    BackButton(navigation = navigation)
 }
+
 
 //Composable for the tab to switch between screens for friend feature
 @Composable
 fun CustomTabs(content: @Composable (selectedIndex: Int) -> Unit) {
     var selectedIndex = remember { mutableStateOf(0) }
 
-    val list = listOf("Friends", "Search Friends", "Friend Requests")
+    val list = listOf("Friends", "Friend Requests", "Search")
 
     Column {
         TabRow(selectedTabIndex = selectedIndex.value,
@@ -86,90 +92,76 @@ fun CustomTabs(content: @Composable (selectedIndex: Int) -> Unit) {
 
 //Friends list feature of friends
 @Composable
-fun FriendsList() {
-    val friends = listOf("Alice", "Bob", "Charlie", "David","Alice", "Bob",
-        "Charlie", "David","Alice", "Bob", "Charlie", "David")  // Sample data
+fun FriendsList(navigation: NavController) {
+    val friends = listOf("Alice", "Bob", "Charlie", "David")
 
-    Box(
-
+    LazyColumn(
     ) {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(1.dp)  // Reduced space between items
-        ) {
-            items(friends) { friend ->
-                Row(
-                    modifier = Modifier.fillMaxSize()
-                        .clickable(onClick={})
-                        .background(Color.LightGray),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start,
-
-                ) {
-                    // Placeholder for the profile picture
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .background(Color.Gray, shape = CircleShape)
-                            .padding(10.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))  // Space between the icon and the name
-
-                    Text(
-                        text = friend,
-                        fontSize = 24.sp
-                    )
-                }
-                Divider(color = Color.Black, thickness = 1.dp)
-
+        items(friends) { friend ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        // Implement logic to navigate to the friend's profile or perform other actions
+                        // Example: navigation.navigate("FriendProfile/$friend")
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .size(60.dp)
+                        .background(Color.Gray, shape = CircleShape)
+                        .padding(6.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = friend, fontSize = 24.sp)
             }
+            Divider(color = Color.Gray.copy(alpha = 0.5f), thickness = 1.dp)
         }
     }
 }
 
 //Component that builds the search friends portion
 @Composable
-fun SearchFriends() {
-    var searchText = remember { mutableStateOf("") }
+fun SearchFriends(navigation: NavController) {
+    var searchText by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier.padding(16.dp)
     ) {
         TextField(
-            value = searchText.value,
-            onValueChange = { searchText.value = it },
-            label = { Text("Search by username") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            value = searchText,
+            onValueChange = { searchText = it },
+            label = {Text("Search by username") },
+            modifier = Modifier.fillMaxWidth())
+    }
 
-        Spacer(modifier = Modifier.height(16.dp))
+    // You can fetch real search results and display them here
+    // Example placeholder:
+    var searchResults = listOf("temp", "temp") // TODO: actually store stuff?
 
-        val searchResults = listOf("Eve", "Frank", "Grace", "Hannah") // Sample data
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(searchResults) { result ->
-                Row(
+    LazyColumn(
+    ) {
+        items(searchResults) { result ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        // Implement logic to navigate to the search result's profile or perform other actions
+                        // Example: navigation.navigate("FriendProfile/$result")
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .clickable(onClick = {
-                            println("Clicked on $result")
-                        }),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color.Blue, shape = CircleShape)
-                            .padding(10.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = result)
-                }
-
+                        .padding(4.dp)
+                        .size(40.dp)
+                        .background(Color.Gray, shape = CircleShape)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = result, fontSize = 20.sp)
             }
         }
     }
@@ -177,56 +169,87 @@ fun SearchFriends() {
 
 //Composable that builds the friends request list
 @Composable
-fun FriendRequestsList() {
-    val requests = listOf("Ian", "Jack", "Katie", "Leo")  // Sample data
+fun FriendRequestsList(navigation: NavController) {
+    val requests = listOf("Ian", "Jack", "Katie", "Leo")
 
-    Box() {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(1.dp)
-        ) {
-            items(requests) { request ->
+    LazyColumn(
+    ) {
+        items(requests) { request ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        // Implement logic to navigate to the friend request's profile or perform other actions
+                        // Example: navigation.navigate("FriendProfile/$request")
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.LightGray)
-                        .clickable(onClick = {
-                        }),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(80.dp)
+                            .padding(6.dp)
+                            .size(60.dp)
                             .background(Color.Gray, shape = CircleShape)
-                            .padding(10.dp)
+                            .padding(6.dp)
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                    Spacer(modifier = Modifier.width(8.dp))  // Space between the icon and the name
+                    Text(text = request, fontSize = 24.sp, modifier = Modifier.weight(1f))
 
-                    Text(text = request,fontSize = 24.sp)
+                    IconButton(
+                        onClick = {
+                            // Implement logic to accept the friend request
+                            // Example: navigate to "FriendProfile/$request" or perform other action
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.add_24px), // Replace with your icon resource
+                            contentDescription = "Add"
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            // Implement logic to decline the friend request
+                            // Example: remove the request from the list or perform other action
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.close_24px), // Replace with your icon resource
+                            contentDescription = "Decline"
+                        )
+                    }
                 }
-                Divider(color = Color.Black, thickness = 1.dp)
-
             }
+            Divider(color = Color.Gray.copy(alpha = 0.5f), thickness = 1.dp)
         }
     }
 }
 
+
 //Helper to create the button to go back to the home screen
 @Composable
-fun BackButton(navigation: NavController){
-    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
+fun BackButton(navigation: NavController) {
+    Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomStart
+    ) {
         FloatingActionButton(
-            containerColor = Color.LightGray.copy(alpha = 0.8f),
+            containerColor = Color.Gray.copy(alpha = 0.8f),
             modifier = Modifier.padding(start = 24.dp, bottom = 24.dp),
-            onClick = { navigation.navigate("HomeScreen") },
-            shape = CircleShape,
-            content = {
-                Icon(
-                    painter = painterResource(R.drawable.back_24px),
-                    contentDescription = "Settings button"
-                )
-            }
-        )
+            onClick = {
+                // Navigate back to the previous screen or perform other actions
+                // Example: navigation.popBackStack()
+            },
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.back_24px), // Replace with your icon
+                contentDescription = "Back Button"
+            )
+        }
     }
 }
