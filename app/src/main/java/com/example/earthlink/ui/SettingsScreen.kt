@@ -9,7 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import com.example.earthlink.utils.getThemeFlow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,15 +31,6 @@ val contentPadding = 15.dp
 @SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
 fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
-//    var selectedTheme by remember { mutableStateOf("default") }
-//
-//    val themeFlow: Flow<String> = dataStore.data
-//        .map { preferences ->
-//            preferences[PreferencesKeys.USER_THEME_KEY] ?: "default"
-//        }
-//
-//    val theme by themeFlow.collectAsState(initial = "default")
-
     //Scaffold is the overall layout of the page, including topbar, floating action button, and
     //body components that make up the page
     Scaffold() { innerPadding ->
@@ -58,24 +49,6 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>)
             About()
             Spacer(modifier = Modifier.height(50.dp))
         }
-    }
-    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-        SaveButton(onClick = {  }, dataStore)
-    }
-}
-
-// save button - saves all settings to the data store
-@Composable
-fun SaveButton(onClick: () -> Unit, dataStore: DataStore<Preferences>) {
-    FloatingActionButton(
-        modifier = Modifier.padding(bottom = 16.dp, end = 16.dp),
-        onClick = { onClick() },
-        containerColor = Color(0xff99b1ed),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.save_24px),
-            contentDescription = "Save button"
-        )
     }
 }
 
@@ -167,34 +140,44 @@ fun HelperCheckBox(text: String){
 }
 
 // Column of radio buttons to swap between different themes
-// currently there is default, light, dark, brown, night, and follow system
+// currently there is default, light, dark, brown, night
 @Composable
 fun ThemeSelector(dataStore: DataStore<Preferences>) {
-    val selectedTheme = remember { mutableStateOf("default") }
+    val currentThemeFlow: Flow<String> = getThemeFlow(dataStore)
+    val currentTheme by currentThemeFlow.collectAsState(initial = "default")
 
-    LaunchedEffect(selectedTheme.value) {
-        dataStore.edit { preferences ->
-            preferences[PreferencesKeys.USER_THEME_KEY] = selectedTheme.value
+    // Remember the selected theme based on the current theme from DataStore
+    var selectedTheme by remember { mutableStateOf(currentTheme) }
+
+    // Update the DataStore when the selected theme changes
+    LaunchedEffect(selectedTheme) {
+        if (currentTheme != selectedTheme) {
+            dataStore.edit { preferences ->
+                preferences[PreferencesKeys.USER_THEME_KEY] = selectedTheme
+            }
         }
     }
 
+    // Whenever the theme in the DataStore changes, update our state accordingly
+    LaunchedEffect(currentTheme) {
+        selectedTheme = currentTheme
+    }
+
     Column {
-        RadioButtonRow("Default", selectedTheme)
-        RadioButtonRow("Light", selectedTheme)
-        RadioButtonRow("Dark", selectedTheme)
-        RadioButtonRow("Brown", selectedTheme)
-        RadioButtonRow("Night", selectedTheme)
+        ThemeRadioButton("Default", selectedTheme) { selectedTheme = it }
+        ThemeRadioButton("Light", selectedTheme) { selectedTheme = it }
+        ThemeRadioButton("Dark", selectedTheme) { selectedTheme = it }
+        ThemeRadioButton("Brown", selectedTheme) { selectedTheme = it }
+        ThemeRadioButton("Night", selectedTheme) { selectedTheme = it }
     }
 }
 
 @Composable
-fun RadioButtonRow(themeName: String, selectedTheme: MutableState<String>) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically // Center-align the content vertically
-    ) {
+fun ThemeRadioButton(themeName: String, selectedTheme: String, onThemeSelected: (String) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(
-            selected = selectedTheme.value == themeName,
-            onClick = { selectedTheme.value = themeName }
+            selected = selectedTheme == themeName,
+            onClick = { onThemeSelected(themeName) }
         )
         Text(text = themeName)
     }

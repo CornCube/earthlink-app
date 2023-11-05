@@ -18,16 +18,13 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.*
 import androidx.navigation.NavHostController
 import com.example.earthlink.R
-import com.example.earthlink.data.PreferencesKeys
 import com.example.earthlink.utils.getCurrentLocation
+import com.example.earthlink.utils.getThemeFlow
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-@SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
 fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
@@ -41,15 +38,10 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
 
-    val themeFlow: Flow<String> = dataStore.data
-        .map { preferences ->
-            preferences[PreferencesKeys.USER_THEME_KEY] ?: "default"
-        }
-
+    val themeFlow = getThemeFlow(dataStore)
     val theme by themeFlow.collectAsState(initial = "default")
 
     var mapStyle by remember { mutableStateOf(MapStyleOptions.loadRawResourceStyle(context, R.raw.defaultmap)) }
-
     LaunchedEffect(theme) {
         mapStyle = when (theme) {
             "Default" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.defaultmap)
@@ -57,7 +49,6 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
             "Dark" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.darkmap)
             "Brown" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.brownmap)
             "Night" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.nightmap)
-            "Follow System" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.defaultmap)
             else -> mapStyle
         }
     }
