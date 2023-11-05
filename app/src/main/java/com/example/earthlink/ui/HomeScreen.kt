@@ -1,10 +1,8 @@
 package com.example.earthlink.ui
 
 import android.content.Context
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.runtime.*
@@ -12,7 +10,6 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.*
@@ -22,6 +19,7 @@ import com.example.earthlink.utils.getCurrentLocation
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun Main(navigation: NavHostController) {
@@ -31,9 +29,10 @@ fun Main(navigation: NavHostController) {
 
     var uiSettings by remember { mutableStateOf(MapUiSettings()) }
     var mapProperties by remember { mutableStateOf(MapProperties()) }
+    val style = MapStyleOptions.loadRawResourceStyle(context, R.raw.brownmap)
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 10f) // Default position
+        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f) // Default position
     }
 
     uiSettings = MapUiSettings(
@@ -44,7 +43,7 @@ fun Main(navigation: NavHostController) {
         rotationGesturesEnabled = true,
         scrollGesturesEnabled = true,
         scrollGesturesEnabledDuringRotateOrZoom = true,
-        tiltGesturesEnabled = false,
+        tiltGesturesEnabled = true,
         zoomControlsEnabled = false,
         zoomGesturesEnabled = true
     )
@@ -55,7 +54,7 @@ fun Main(navigation: NavHostController) {
         isMyLocationEnabled = true,
         isTrafficEnabled = false,
         latLngBoundsForCameraTarget = null,
-        mapStyleOptions = null,
+        mapStyleOptions = style,
         mapType = MapType.NORMAL,
         maxZoomPreference = 20f,
         minZoomPreference = 2f
@@ -66,7 +65,7 @@ fun Main(navigation: NavHostController) {
         val listener = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
                 getCurrentLocation(context) { location ->
-                    cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(location, 15f))
+                    cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(location, 17f))
                 }
             }
         }
@@ -101,6 +100,7 @@ fun Main(navigation: NavHostController) {
 @Composable
 fun LocationButton(cameraPositionState: CameraPositionState, context: Context) {
     val isMapCentered = remember { mutableStateOf(true) }
+    val coroutineScope = rememberCoroutineScope()
 
     val iconResource = if (isMapCentered.value) R.drawable.my_location_24px else R.drawable.location_searching_24px
     val iconColor = if (isMapCentered.value) Color(0xff8fa8ea) else Color(0xffe5ecf2)
@@ -110,8 +110,10 @@ fun LocationButton(cameraPositionState: CameraPositionState, context: Context) {
             .padding(bottom = 100.dp, end = 16.dp),
         onClick = {
             getCurrentLocation(context) { location ->
-                isMapCentered.value = true
-                cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 15f)
+                coroutineScope.launch {
+                    isMapCentered.value = true
+                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(location, 17f), 1000)
+                }
             }
         },
         containerColor = Color(0xff2a2b2d),

@@ -28,7 +28,7 @@ val items = listOf(
 )
 
 
-// basic bottom bar with items for home, friends, profile, and settings
+// Basic bottom bar with items for home, friends, profile, and settings
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination
@@ -38,17 +38,24 @@ fun BottomNavigationBar(navController: NavController) {
         elevation = 0.dp
     ) {
         items.forEach { screen ->
+            val isSelected = currentDestination?.route == screen.route
             BottomNavigationItem(
                 icon = { Icon(painterResource(id = screen.icon), contentDescription = screen.label) },
                 label = { Text(screen.label) },
-                selected = currentDestination?.route == screen.route,
+                selected = isSelected,
                 onClick = {
-                    navController.navigate(screen.route) {
-                        launchSingleTop = true
-                        restoreState = true
+                    if (!isSelected) {
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.startDestinationId)
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
+                },
+                selectedContentColor = Color.Blue, // Change this to your selected color
+                unselectedContentColor = Color.White // Change this to your unselected color
             )
         }
     }
 }
+
