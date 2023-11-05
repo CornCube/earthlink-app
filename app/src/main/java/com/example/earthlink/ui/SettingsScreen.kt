@@ -1,47 +1,22 @@
 package com.example.earthlink.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.earthlink.R
-
 
 val titleSize = 32.sp
 val headerSize = 28.sp
 val verticalSpacing = 8.dp
 val contentPadding = 15.dp
-
 
 //main screen for settings screen, calls other composables
 @Composable
@@ -49,14 +24,7 @@ fun SettingsScreen(navigation: NavController) {
 
     //Scaffold is the overall layout of the page, including topbar, floating action button, and
     //body components that make up the page
-    Scaffold(
-        topBar = {
-            TopBar()
-        },
-        floatingActionButton = {
-            ExitButton(navigation = navigation)
-        },
-    ) { innerPadding ->
+    Scaffold() { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -65,9 +33,9 @@ fun SettingsScreen(navigation: NavController) {
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         ) {
             Spacer(modifier = Modifier.height(verticalSpacing))
-            AccountSettings()
-            Notification()
             Appearance()
+            Notification()
+            AccountSettings()
             HelpSupport()
             About()
             Spacer(modifier = Modifier.height(50.dp))
@@ -75,33 +43,14 @@ fun SettingsScreen(navigation: NavController) {
     }
 }
 
-//Composable component for the topbar of the screen
-@Composable
-fun TopBar(){
-    Surface(color = Color.LightGray.copy(alpha = 0.7f)){
-        Text(text="Settings",
-            modifier = Modifier
-                .padding(all = contentPadding)
-                .fillMaxWidth(),
-            fontWeight = FontWeight.SemiBold,
-            fontSize = titleSize
-        )
-    }
-
-}
-
 //Composable component for the account portion of the settings
 @Composable
 fun AccountSettings(){
     SettingHeader(text = "Account")
-    HelperButton(text = "Change user/password")
+    HelperButton(text = "Change username/password")
 
     Spacer(Modifier.height(12.dp))
-
-
 }
-
-
 
 //Composable component for the notification portion of the settings
 @Composable
@@ -120,9 +69,7 @@ fun Notification(){
 @Composable
 fun Appearance() {
     SettingHeader(text = "Appearance")
-    HelperCheckBox(text = "Dark Mode")
-    HelperCheckBox(text = "Theme 1")
-    HelperCheckBox(text = "Theme 2")
+    ThemeSelector()
     Spacer(Modifier.height(12.dp))
 
 }
@@ -145,25 +92,6 @@ fun About(){
     HelperButton(text = "Terms of Services")
 
     Spacer(Modifier.height(12.dp))
-}
-
-//Component for the exit button to go back to the home screen
-@Composable
-fun ExitButton(navigation: NavController){
-    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
-        FloatingActionButton(
-            containerColor = Color.LightGray.copy(alpha = 0.8f),
-            modifier = Modifier.padding(start = 32.dp),
-            onClick = { navigation.navigate("HomeScreen") },
-            shape = CircleShape,
-            content = {
-                Icon(
-                    painter = painterResource(R.drawable.back_24px),
-                    contentDescription = "Settings button"
-                )
-            }
-        )
-    }
 }
 
 //Helper function to create the header for each portion of the settings
@@ -199,5 +127,33 @@ fun HelperCheckBox(text: String){
         Checkbox(modifier = Modifier.size(32.dp),
             checked = isCheck.value,
             onCheckedChange = {isCheck.value = it})
+    }
+}
+
+// Column of radio buttons to swap between different themes
+// currently there is brown, dark, default, light, night, and system
+@Composable
+fun ThemeSelector() {
+    val selectedTheme = remember { mutableStateOf("default") }
+    Column {
+        RadioButtonRow("Brown", selectedTheme)
+        RadioButtonRow("Dark", selectedTheme)
+        RadioButtonRow("Default", selectedTheme)
+        RadioButtonRow("Light", selectedTheme)
+        RadioButtonRow("Night", selectedTheme)
+        RadioButtonRow("Follow System", selectedTheme)
+    }
+}
+
+@Composable
+fun RadioButtonRow(themeName: String, selectedTheme: MutableState<String>) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically // Center-align the content vertically
+    ) {
+        RadioButton(
+            selected = selectedTheme.value == themeName,
+            onClick = { selectedTheme.value = themeName }
+        )
+        Text(text = themeName)
     }
 }
