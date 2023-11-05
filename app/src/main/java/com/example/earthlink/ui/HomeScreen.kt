@@ -1,5 +1,6 @@
 package com.example.earthlink.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -12,27 +13,53 @@ import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.*
 import androidx.navigation.NavHostController
 import com.example.earthlink.R
+import com.example.earthlink.data.PreferencesKeys
 import com.example.earthlink.utils.getCurrentLocation
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+@SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
-fun Main(navigation: NavHostController) {
+fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
 
     var isAddPostVisible by remember { mutableStateOf(false) }
 
     var uiSettings by remember { mutableStateOf(MapUiSettings()) }
     var mapProperties by remember { mutableStateOf(MapProperties()) }
-    val style = MapStyleOptions.loadRawResourceStyle(context, R.raw.brownmap)
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f) // Default position
+        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
+    }
+
+    val themeFlow: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_THEME_KEY] ?: "default"
+        }
+
+    val theme by themeFlow.collectAsState(initial = "default")
+
+    var mapStyle by remember { mutableStateOf(MapStyleOptions.loadRawResourceStyle(context, R.raw.defaultmap)) }
+
+    LaunchedEffect(theme) {
+        mapStyle = when (theme) {
+            "Default" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.defaultmap)
+            "Light" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.lightmap)
+            "Dark" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.darkmap)
+            "Brown" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.brownmap)
+            "Night" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.nightmap)
+            "Follow System" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.defaultmap)
+            else -> mapStyle
+        }
     }
 
     uiSettings = MapUiSettings(
@@ -54,7 +81,7 @@ fun Main(navigation: NavHostController) {
         isMyLocationEnabled = true,
         isTrafficEnabled = false,
         latLngBoundsForCameraTarget = null,
-        mapStyleOptions = style,
+        mapStyleOptions = mapStyle,
         mapType = MapType.NORMAL,
         maxZoomPreference = 20f,
         minZoomPreference = 2f
@@ -170,7 +197,6 @@ fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) ->
     var textState by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismissRequest) {
-        // Card composable used to create a card-like box around the content
         Card(
             modifier = Modifier.padding(16.dp),
             elevation = cardElevation(8.dp)
@@ -178,7 +204,6 @@ fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) ->
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = "Write your message")
                 Spacer(modifier = Modifier.height(8.dp))
-                // Material Design TextField from Material3
                 TextField(
                     value = textState,
                     onValueChange = { textState = it },

@@ -1,5 +1,6 @@
 package com.example.earthlink.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,10 +9,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavController
+import com.example.earthlink.R
+import com.example.earthlink.data.PreferencesKeys
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 val titleSize = 32.sp
 val headerSize = 28.sp
@@ -19,8 +28,17 @@ val verticalSpacing = 8.dp
 val contentPadding = 15.dp
 
 //main screen for settings screen, calls other composables
+@SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
-fun SettingsScreen(navigation: NavController) {
+fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
+//    var selectedTheme by remember { mutableStateOf("default") }
+//
+//    val themeFlow: Flow<String> = dataStore.data
+//        .map { preferences ->
+//            preferences[PreferencesKeys.USER_THEME_KEY] ?: "default"
+//        }
+//
+//    val theme by themeFlow.collectAsState(initial = "default")
 
     //Scaffold is the overall layout of the page, including topbar, floating action button, and
     //body components that make up the page
@@ -33,13 +51,31 @@ fun SettingsScreen(navigation: NavController) {
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         ) {
             Spacer(modifier = Modifier.height(verticalSpacing))
-            Appearance()
+            Appearance(dataStore)
             Notification()
             AccountSettings()
             HelpSupport()
             About()
             Spacer(modifier = Modifier.height(50.dp))
         }
+    }
+    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+        SaveButton(onClick = {  }, dataStore)
+    }
+}
+
+// save button - saves all settings to the data store
+@Composable
+fun SaveButton(onClick: () -> Unit, dataStore: DataStore<Preferences>) {
+    FloatingActionButton(
+        modifier = Modifier.padding(bottom = 16.dp, end = 16.dp),
+        onClick = { onClick() },
+        containerColor = Color(0xff99b1ed),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.save_24px),
+            contentDescription = "Save button"
+        )
     }
 }
 
@@ -67,9 +103,9 @@ fun Notification(){
 
 //Composable component for the appearance portion of the settings
 @Composable
-fun Appearance() {
+fun Appearance(dataStore: DataStore<Preferences>) {
     SettingHeader(text = "Appearance")
-    ThemeSelector()
+    ThemeSelector(dataStore)
     Spacer(Modifier.height(12.dp))
 
 }
@@ -131,17 +167,23 @@ fun HelperCheckBox(text: String){
 }
 
 // Column of radio buttons to swap between different themes
-// currently there is brown, dark, default, light, night, and system
+// currently there is default, light, dark, brown, night, and follow system
 @Composable
-fun ThemeSelector() {
+fun ThemeSelector(dataStore: DataStore<Preferences>) {
     val selectedTheme = remember { mutableStateOf("default") }
+
+    LaunchedEffect(selectedTheme.value) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.USER_THEME_KEY] = selectedTheme.value
+        }
+    }
+
     Column {
-        RadioButtonRow("Brown", selectedTheme)
-        RadioButtonRow("Dark", selectedTheme)
         RadioButtonRow("Default", selectedTheme)
         RadioButtonRow("Light", selectedTheme)
+        RadioButtonRow("Dark", selectedTheme)
+        RadioButtonRow("Brown", selectedTheme)
         RadioButtonRow("Night", selectedTheme)
-        RadioButtonRow("Follow System", selectedTheme)
     }
 }
 
