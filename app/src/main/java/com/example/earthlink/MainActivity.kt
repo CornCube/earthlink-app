@@ -64,10 +64,10 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable(Screen.Home.route) { Main(navigation = navController, dataStore) }
-                            composable(Screen.Profile.route) { ProfileScreen(navigation = navController) }
+                            composable(Screen.Profile.route) { ProfileScreen(navigation = navController, dataStore) }
                             composable(Screen.Friends.route) { FriendScreen(navigation = navController) }
                             composable(Screen.Settings.route) { SettingsScreen(navigation = navController, dataStore) }
-                            composable("EditProfileScreen"){ EditProfileScreen(navigation = navController) }
+                            composable("EditProfileScreen"){ EditProfileScreen(navigation = navController, dataStore) }
                             // Add other composable destinations as needed here
                         }
                     }

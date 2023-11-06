@@ -14,3 +14,30 @@ fun getThemeFlow(dataStore: DataStore<Preferences>): Flow<String> {
 
     return themeFlow
 }
+
+fun getFilterFlow(dataStore: DataStore<Preferences>): Flow<Boolean> {
+    val filterFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_FILTER_KEY] ?: false
+        }
+
+    return filterFlow
+}
+
+fun getProfilePictureFlow(dataStore: DataStore<Preferences>): Flow<String> {
+    val profilePictureFlow: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_PROFILE_PICTURE_URI_KEY] ?: ""
+        }
+
+    return profilePictureFlow
+}
+
+fun getBioFlow(dataStore: DataStore<Preferences>): Flow<String> {
+    val bioFlow: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_BIO_KEY] ?: ""
+        }
+
+    return bioFlow
+}

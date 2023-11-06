@@ -3,6 +3,7 @@ package com.example.earthlink.ui
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,11 +22,17 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavController
 import com.example.earthlink.R
+import com.example.earthlink.data.PreferencesKeys
+import com.example.earthlink.utils.getProfilePictureFlow
+import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(navigation: NavController) {
+fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
     Column {
         Row(
             modifier = Modifier
@@ -33,7 +40,7 @@ fun ProfileScreen(navigation: NavController) {
                 .height(120.dp)
                 .padding(16.dp)
         ) {
-            ProfilePicture()
+            ProfilePicture(dataStore)
             Spacer(modifier = Modifier.width(16.dp))
             UserInfo()
         }
@@ -68,35 +75,20 @@ fun ProfileScreen(navigation: NavController) {
 }
 
 @Composable
-fun ProfilePicture() {
+fun ProfilePicture(dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
     val profilePictureState = remember { mutableStateOf<Bitmap?>(null) }
 
-    // Launcher to pick an image from the gallery
-    val galleryLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val imageUri = result.data?.data
-            imageUri?.let {
-                val imageBitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-                profilePictureState.value = imageBitmap
-            }
-        }
-    }
-
     // Display the profile picture or a default placeholder if none exists
-    Box(
-        modifier = Modifier.clickable {
-            val pickImageIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            galleryLauncher.launch(pickImageIntent)
-        }
-    ) {
+    Box() {
+        // Display the profile picture or a default placeholder
         profilePictureState.value?.let {
             Image(bitmap = it.asImageBitmap(), contentDescription = "User Profile Picture")
         } ?: Image( painter = painterResource(R.drawable.person_24px),
-            contentDescription = "Profile Picture",
+            contentDescription = "Profile Picture Placeholder",
             modifier = Modifier
                 .size(100.dp)
-                .clip(RoundedCornerShape(12.dp)) // corner radius
+                .clip(RoundedCornerShape(12.dp))
                 .background(Color.LightGray))
     }
 }
@@ -113,7 +105,7 @@ fun UserInfo() {
             style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 30.sp)
         )
         Text(
-            text = "User Since: xx-xx-xxx",
+            text = "User Since: 11-06-2023",
             style = TextStyle(fontSize = 16.sp)
         )
         Text(
