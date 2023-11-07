@@ -30,11 +30,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavController
 import com.example.earthlink.R
+import com.example.earthlink.data.PreferencesKeys
+import com.example.earthlink.utils.getBioFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 @Composable
 fun EditProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
+    val currentBioFlow: Flow<String> = getBioFlow(dataStore)
+    val currentBio by currentBioFlow.collectAsState(initial = "")
+
+    // Remember the userBio state, initialized with the current bio from DataStore
+    var userBio by remember { mutableStateOf(currentBio) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -49,14 +62,16 @@ fun EditProfileScreen(navigation: NavController, dataStore: DataStore<Preference
         Spacer(modifier = Modifier.height(16.dp))
 
         UpdateProfilePicture()
+        androidx.compose.material3.Text(
+            text = "to edit profile, click on the profile picture on the previous screen",
+            style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var userBio = ""
         EditBio(
             initialBio = userBio,
             onBioChange = { updatedBio ->
-                // Update the user's bio when it changes
                 userBio = updatedBio
             }
         )
@@ -66,8 +81,13 @@ fun EditProfileScreen(navigation: NavController, dataStore: DataStore<Preference
         // Save Changes Button
         Button(
             onClick = {
-                // Handle profile updates here
-                // Show success or error messages as needed
+                CoroutineScope(Dispatchers.IO).launch {
+                    dataStore.edit { preferences ->
+                        preferences[PreferencesKeys.USER_BIO_KEY] = userBio
+                    }
+                }
+                // TODO: show snackbar notification here
+                navigation.popBackStack()
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -75,7 +95,7 @@ fun EditProfileScreen(navigation: NavController, dataStore: DataStore<Preference
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.edit_24px), // Replace with your icon
+                    painter = painterResource(id = R.drawable.edit_24px),
                     contentDescription = "Save Changes Icon"
                 )
                 Spacer(modifier = Modifier.width(8.dp))

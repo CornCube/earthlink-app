@@ -3,7 +3,6 @@ package com.example.earthlink.ui
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,12 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavController
 import com.example.earthlink.R
-import com.example.earthlink.data.PreferencesKeys
-import com.example.earthlink.utils.getProfilePictureFlow
-import kotlinx.coroutines.launch
+import com.example.earthlink.utils.getBioFlow
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
@@ -42,7 +39,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) 
         ) {
             ProfilePicture(dataStore)
             Spacer(modifier = Modifier.width(16.dp))
-            UserInfo()
+            UserInfo(dataStore)
         }
         Card(
             modifier = Modifier
@@ -79,8 +76,22 @@ fun ProfilePicture(dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
     val profilePictureState = remember { mutableStateOf<Bitmap?>(null) }
 
+    // Launcher to pick an image from the gallery
+    val galleryLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val imageUri = result.data?.data
+            imageUri?.let {
+                val imageBitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+                profilePictureState.value = imageBitmap
+            }
+        }
+    }
+
     // Display the profile picture or a default placeholder if none exists
-    Box() {
+    Box(modifier = Modifier.clickable {
+        val pickImageIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        galleryLauncher.launch(pickImageIntent)
+    }) {
         // Display the profile picture or a default placeholder
         profilePictureState.value?.let {
             Image(bitmap = it.asImageBitmap(), contentDescription = "User Profile Picture")
@@ -94,7 +105,10 @@ fun ProfilePicture(dataStore: DataStore<Preferences>) {
 }
 
 @Composable
-fun UserInfo() {
+fun UserInfo(dataStore: DataStore<Preferences>) {
+    val bioBlow: Flow<String> = getBioFlow(dataStore)
+    val bio by bioBlow.collectAsState(initial = "Personal Info")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -109,7 +123,7 @@ fun UserInfo() {
             style = TextStyle(fontSize = 16.sp)
         )
         Text(
-            text = "Personal Info",
+            text = bio,
             style = TextStyle(fontSize = 20.sp)
         )
     }

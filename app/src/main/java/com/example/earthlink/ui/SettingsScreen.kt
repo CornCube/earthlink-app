@@ -19,6 +19,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavController
 import com.example.earthlink.R
 import com.example.earthlink.data.PreferencesKeys
+import com.example.earthlink.utils.getFilterFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -43,6 +44,7 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>)
         ) {
             Spacer(modifier = Modifier.height(verticalSpacing))
             Appearance(dataStore)
+            FilterSettings(dataStore)
             Notification()
             AccountSettings()
             HelpSupport()
@@ -50,6 +52,38 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>)
             Spacer(modifier = Modifier.height(50.dp))
         }
     }
+}
+
+// Composable component for the filter settings
+@Composable
+fun FilterSettings(dataStore: DataStore<Preferences>) {
+    SettingHeader(text = "Message Filter")
+
+    val currentFilterFlow: Flow<Boolean> = getFilterFlow(dataStore)
+    val currentFilter by currentFilterFlow.collectAsState(initial = false)
+
+    // Remember a mutable state initialized with the current filter setting
+    var allowProfanity by remember { mutableStateOf(currentFilter) }
+
+    // Update the DataStore when the allowProfanity state changes
+    LaunchedEffect(allowProfanity) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.USER_FILTER_KEY] = allowProfanity
+        }
+    }
+
+    LaunchedEffect(currentFilter) {
+        allowProfanity = currentFilter
+    }
+
+    // Pass the mutable state and its setter to the HelperCheckBox
+    HelperCheckBox(
+        text = "Allow Profanity",
+        checked = allowProfanity,
+        onCheckedChange = { allowProfanity = it }
+    )
+
+    Spacer(Modifier.height(12.dp))
 }
 
 //Composable component for the account portion of the settings
@@ -66,9 +100,9 @@ fun AccountSettings(){
 fun Notification(){
     SettingHeader(text = "Notifications")
     
-    HelperCheckBox(text = "Mute Notifications")
-    HelperCheckBox(text = "Notification setting 2")
-    HelperCheckBox(text = "Notification setting 3")
+    HelperCheckBox(text = "Mute Notifications", checked = false, onCheckedChange = { /*TODO*/ })
+    HelperCheckBox(text = "Notification setting 2", checked = false, onCheckedChange = { /*TODO*/ })
+    HelperCheckBox(text = "Notification setting 3", checked = false, onCheckedChange = { /*TODO*/ })
 
     Spacer(Modifier.height(12.dp))
 
@@ -123,19 +157,23 @@ fun HelperButton(text: String){
     }
 }
 
-//Helper function that creates a checkbox
+// Helper function that creates a checkbox
 @Composable
-fun HelperCheckBox(text: String){
-
-    val isCheck = remember { mutableStateOf(false) }
-
-    Row(modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween){
-
+fun HelperCheckBox(
+    text: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
         Text(text, textAlign = TextAlign.Center, fontSize = 20.sp)
-        Checkbox(modifier = Modifier.size(32.dp),
-            checked = isCheck.value,
-            onCheckedChange = {isCheck.value = it})
+        Checkbox(
+            modifier = Modifier.size(32.dp),
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
     }
 }
 
