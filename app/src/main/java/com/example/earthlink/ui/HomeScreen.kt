@@ -2,6 +2,10 @@ package com.example.earthlink.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.util.Log
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -13,21 +17,46 @@ import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.*
 import androidx.navigation.NavHostController
 import com.example.earthlink.R
+import com.example.earthlink.model.Message
+import com.example.earthlink.network.*
 import com.example.earthlink.utils.getCurrentLocation
+import com.example.earthlink.utils.getFilterFlow
 import com.example.earthlink.utils.getThemeFlow
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @Composable
 fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val user = "corn"
+    data class MarkerInfo(val location: LatLng, val message: String)
+
+    var markers by remember { mutableStateOf(listOf<MarkerInfo>()) }
+
+    // adding a marker to map
+    fun addMarker(message: String, location: LatLng) {
+        markers = markers + MarkerInfo(location, message)
+    }
+
+    //  message icon func
+    fun bitmapDescriptorFromVector(context: Context, @DrawableRes vectorResId: Int): BitmapDescriptor {
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
+        vectorDrawable!!.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+        val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.draw(canvas)
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
 
     var isAddPostVisible by remember { mutableStateOf(false) }
 
@@ -99,19 +128,59 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
         properties = mapProperties,
-
     ) {
+        markers.forEach { markerInfo ->
+            Marker(
+                MarkerState(position = markerInfo.location),
+                title = "New Post",
+                snippet = markerInfo.message,
+                icon = bitmapDescriptorFromVector(context, R.drawable.message_active_24px)
+            )
+        }
     }
 
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         LocationButton(cameraPositionState = cameraPositionState, context = context)
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-        AddPost(onClick = { isAddPostVisible = true })
+        AddPost(onClick = { isAddPostVisible = true }, dataStore)
     }
 
     if (isAddPostVisible) {
-        AddPostModal(onDismissRequest = { isAddPostVisible = false })
+        AddPostModal(
+            onDismissRequest = { isAddPostVisible = false },
+            onPostSubmit = { message ->
+                coroutineScope.launch {
+                    val currentLocation = cameraPositionState.position.target
+                    val post = Message(
+                        message_content = message,
+                        latitude = currentLocation.latitude,
+                        longitude = currentLocation.longitude,
+                        timeStamp = System.currentTimeMillis(),
+                        user_uid = user
+                    )
+                    try {
+                        val response = postMessage(post)
+                        response?.let {
+                            Log.d("PostMessageResponse", it.toString())
+                            addMarker(message, currentLocation)
+                        } ?: Log.d("PostMessageResponse", "Response was successful")
+                    } catch (e: Exception) {
+                        Log.e("PostMessage", "Failed to post message", e)
+                    }
+                }
+            },
+            dataStore = dataStore
+        )
+    }
+}
+
+// Helper function to replace profanities in the message
+fun ProfanityCheck(message: String, filterEnabled: Boolean): String {
+    return if (!filterEnabled) {
+        message.replace("fuck", "****", ignoreCase = true)
+    } else {
+        message
     }
 }
 
@@ -146,7 +215,7 @@ fun LocationButton(cameraPositionState: CameraPositionState, context: Context) {
 }
 
 @Composable
-fun AddPost(onClick: () -> Unit) {
+fun AddPost(onClick: () -> Unit, dataStore: DataStore<Preferences>) {
     var showAddPostModal by remember { mutableStateOf(false) }
 
     FloatingActionButton(
@@ -161,12 +230,15 @@ fun AddPost(onClick: () -> Unit) {
     }
 
     if (showAddPostModal) {
-        AddPostModal(onDismissRequest = { showAddPostModal = false })
+        AddPostModal(onDismissRequest = { showAddPostModal = false }, onPostSubmit = { message ->
+            println("Posted message: $message")
+            showAddPostModal = false
+        }, dataStore = dataStore)
     }
 }
 
 @Composable
-fun AddPostModal(onDismissRequest: () -> Unit) {
+fun AddPostModal(onDismissRequest: () -> Unit, onPostSubmit: (String) -> Unit, dataStore: DataStore<Preferences>) {
     var showDialog by remember { mutableStateOf(true) }
 
     if (showDialog) {
@@ -177,15 +249,20 @@ fun AddPostModal(onDismissRequest: () -> Unit) {
             },
             onPostClick = { message ->
                 println("Posted message: $message")
+                onPostSubmit(message)
                 showDialog = false
-            }
+            },
+            dataStore = dataStore
         )
     }
 }
 
 @Composable
-fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) -> Unit) {
+fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) -> Unit, dataStore: DataStore<Preferences>) {
     var textState by remember { mutableStateOf("") }
+
+    val filterFlow: Flow<Boolean> = getFilterFlow(dataStore)
+    val filterEnabled by filterFlow.collectAsState(initial = false)
 
     Dialog(onDismissRequest = onDismissRequest) {
         Card(
@@ -212,7 +289,8 @@ fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) ->
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = {
-                        onPostClick(textState)
+                        val filteredMessage = ProfanityCheck(textState, filterEnabled)
+                        onPostClick(filteredMessage)
                         onDismissRequest()
                     }) {
                         Text("Post")

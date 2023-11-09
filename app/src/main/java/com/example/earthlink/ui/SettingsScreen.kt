@@ -1,6 +1,5 @@
 package com.example.earthlink.ui
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +20,6 @@ import com.example.earthlink.R
 import com.example.earthlink.data.PreferencesKeys
 import com.example.earthlink.utils.getFilterFlow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 val titleSize = 32.sp
 val headerSize = 28.sp
@@ -29,7 +27,6 @@ val verticalSpacing = 8.dp
 val contentPadding = 15.dp
 
 //main screen for settings screen, calls other composables
-@SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
 fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
     //Scaffold is the overall layout of the page, including topbar, floating action button, and
