@@ -3,6 +3,9 @@ package com.example.earthlink.utils
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.example.earthlink.data.PreferencesKeys
+import com.example.earthlink.model.Message
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -41,3 +44,13 @@ fun getBioFlow(dataStore: DataStore<Preferences>): Flow<String> {
 
     return bioFlow
 }
+
+fun parseMessages(jsonString: String): List<Message> {
+    val gson = Gson()
+    val type = object : TypeToken<Map<String, Message>>() {}.type
+    val messagesMap: Map<String, Message> = gson.fromJson(jsonString, type)
+
+    // Convert the map to a list of messages
+    return messagesMap.values.toList()
+}
+

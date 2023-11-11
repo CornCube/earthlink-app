@@ -23,53 +23,36 @@ import androidx.lifecycle.*
 import androidx.navigation.NavHostController
 import com.example.earthlink.R
 import com.example.earthlink.model.Message
+import com.example.earthlink.model.MessageListFormat
 import com.example.earthlink.network.*
 import com.example.earthlink.utils.getCurrentLocation
 import com.example.earthlink.utils.getFilterFlow
 import com.example.earthlink.utils.getThemeFlow
+import com.example.earthlink.utils.parseMessages
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @Composable
 fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
+    val user = "corn"
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val user = "corn"
-    data class MarkerInfo(val location: LatLng, val message: String)
-
-    var markers by remember { mutableStateOf(listOf<MarkerInfo>()) }
-
-    // adding a marker to map
-    fun addMarker(message: String, location: LatLng) {
-        markers = markers + MarkerInfo(location, message)
-    }
-
-    //  message icon func
-    fun bitmapDescriptorFromVector(context: Context, @DrawableRes vectorResId: Int): BitmapDescriptor {
-        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
-        vectorDrawable!!.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
-        val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        vectorDrawable.draw(canvas)
-        return BitmapDescriptorFactory.fromBitmap(bitmap)
-    }
 
     var isAddPostVisible by remember { mutableStateOf(false) }
     var showPostSnackbar by remember { mutableStateOf(false) }
 
-    var uiSettings by remember { mutableStateOf(MapUiSettings()) }
-    var mapProperties by remember { mutableStateOf(MapProperties()) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
 
+    // theme state
     val themeFlow = getThemeFlow(dataStore)
     val theme by themeFlow.collectAsState(initial = "default")
-
     var mapStyle by remember { mutableStateOf(MapStyleOptions.loadRawResourceStyle(context, R.raw.defaultmap)) }
     LaunchedEffect(theme) {
         mapStyle = when (theme) {
@@ -83,6 +66,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         snackbarHostState.showSnackbar("Logged in as $user")
     }
 
+    var uiSettings by remember { mutableStateOf(MapUiSettings()) }
     uiSettings = MapUiSettings(
         compassEnabled = true,
         indoorLevelPickerEnabled = false,
@@ -96,6 +80,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         zoomGesturesEnabled = true
     )
 
+    var mapProperties by remember { mutableStateOf(MapProperties()) }
     mapProperties = MapProperties(
         isBuildingEnabled = false,
         isIndoorEnabled = false,
@@ -124,18 +109,31 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             lifecycleOwner.lifecycle.removeObserver(listener)
         }
     }
+
+    // Fetch and observe messages
+    val messages = remember { mutableStateOf<Map<String, MessageListFormat>>(mapOf()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val response = getMessagesRadius(36.14775337693432, -86.80648818612099)
+            response?.let {
+                messages.value = it
+            }
+            Log.d("Messages", messages.value.toString())
+            delay(5000)
+        }
+    }
+
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
         properties = mapProperties,
     ) {
-        markers.forEach { markerInfo ->
+        messages.value.forEach { (key, value) ->
             Marker(
-                MarkerState(position = markerInfo.location),
-                title = "New Post",
-                snippet = markerInfo.message,
-                icon = bitmapDescriptorFromVector(context, R.drawable.message_active_24px)
+                state = MarkerState(position = LatLng(value.latitude, value.longitude)),
+                snippet = value.message_content,
+                title = value.user_uid,
             )
         }
     }
@@ -165,7 +163,6 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
                         val response = postMessage(post)
                         response?.let {
                             Log.d("PostMessageResponse", it.toString())
-                            addMarker(message, currentLocation)
                         } ?: Log.d("PostMessageResponse", "Response was successful")
                     } catch (e: Exception) {
                         Log.e("PostMessage", "Failed to post message", e)
@@ -179,10 +176,9 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
     LaunchedEffect(showPostSnackbar) {
         if (showPostSnackbar) {
             snackbarHostState.showSnackbar("Message posted")
-            showPostSnackbar = false // Reset the state
+            showPostSnackbar = false
         }
     }
-
 }
 
 // Helper function to replace profanities in the message

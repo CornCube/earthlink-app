@@ -5,7 +5,10 @@ import androidx.compose.runtime.MutableState
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.earthlink.model.Message
+import com.example.earthlink.model.MessageListFormat
 import com.example.earthlink.model.PostMessageResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -38,26 +41,21 @@ object RetrofitHelper {
     }
 }
 
-fun getMessages() {
+suspend fun getMessagesRadius(latitude: Double, longitude: Double): Map<String, MessageListFormat>? {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
 
-    val _messages = MutableLiveData<List<Message>>()
-    val messages: LiveData<List<Message>> = _messages
-
-    messagesService.getAllMessages().enqueue(object : Callback<List<Message>> {
-        override fun onResponse(call: Call<List<Message>>, response: Response<List<Message>>) {
-            if (response.isSuccessful) {
-                _messages.postValue(response.body())
-            } else {
-                _messages.postValue(emptyList())
-            }
+    // Use a try-catch to handle potential exceptions
+    return try {
+        val response = messagesService.getMessagesRadius(latitude, longitude).awaitResponse()
+        if (response.isSuccessful) {
+            response.body()
+        } else {
+            null
         }
-
-        override fun onFailure(call: Call<List<Message>>, t: Throwable) {
-            _messages.postValue(emptyList())
-        }
-    })
+    } catch (e: Exception) {
+        null
+    }
 }
 
 suspend fun postMessage(message: Message): PostMessageResponse? {
