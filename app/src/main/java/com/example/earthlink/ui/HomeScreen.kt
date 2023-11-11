@@ -1,6 +1,5 @@
 package com.example.earthlink.ui
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -35,7 +34,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @Composable
-fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
+fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val user = "corn"
@@ -59,6 +58,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
     }
 
     var isAddPostVisible by remember { mutableStateOf(false) }
+    var showPostSnackbar by remember { mutableStateOf(false) }
 
     var uiSettings by remember { mutableStateOf(MapUiSettings()) }
     var mapProperties by remember { mutableStateOf(MapProperties()) }
@@ -80,6 +80,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
             "Night" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.nightmap)
             else -> mapStyle
         }
+        snackbarHostState.showSnackbar("Logged in as $user")
     }
 
     uiSettings = MapUiSettings(
@@ -159,6 +160,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
                         timeStamp = System.currentTimeMillis(),
                         user_uid = user
                     )
+                    showPostSnackbar = true
                     try {
                         val response = postMessage(post)
                         response?.let {
@@ -173,6 +175,14 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>) {
             dataStore = dataStore
         )
     }
+
+    LaunchedEffect(showPostSnackbar) {
+        if (showPostSnackbar) {
+            snackbarHostState.showSnackbar("Message posted")
+            showPostSnackbar = false // Reset the state
+        }
+    }
+
 }
 
 // Helper function to replace profanities in the message

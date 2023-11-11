@@ -38,12 +38,12 @@ object RetrofitHelper {
     }
 }
 
-private val _messages = MutableLiveData<List<Message>>()
-val messages: LiveData<List<Message>> = _messages
-
 fun getMessages() {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
+
+    val _messages = MutableLiveData<List<Message>>()
+    val messages: LiveData<List<Message>> = _messages
 
     messagesService.getAllMessages().enqueue(object : Callback<List<Message>> {
         override fun onResponse(call: Call<List<Message>>, response: Response<List<Message>>) {
@@ -60,21 +60,19 @@ fun getMessages() {
     })
 }
 
-// Make the function suspendable
 suspend fun postMessage(message: Message): PostMessageResponse? {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
 
     // Use a try-catch to handle potential exceptions
     return try {
-        // Synchronously send the request and return the response
         val response = messagesService.postMessage(message).awaitResponse()
         if (response.isSuccessful) {
             response.body()
         } else {
-            null // Or handle the error as you see fit
+            null
         }
     } catch (e: Exception) {
-        null // Or log the exception
+        null
     }
 }

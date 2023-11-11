@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val snackbarHostState = remember { SnackbarHostState() }
             EarthLinkTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -46,6 +47,9 @@ class MainActivity : ComponentActivity() {
                             if (shouldShowBottomBar) {
                                 BottomNavigationBar(navController = navController)
                             }
+                        },
+                        snackbarHost = {
+                            SnackbarHost(hostState = snackbarHostState)
                         }
                     ) { innerPadding ->
                         NavHost(
@@ -63,11 +67,11 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
-                            composable(Screen.Home.route) { Main(navigation = navController, dataStore) }
+                            composable(Screen.Home.route) { Main(navigation = navController, dataStore, snackbarHostState) }
                             composable(Screen.Profile.route) { ProfileScreen(navigation = navController, dataStore) }
                             composable(Screen.Friends.route) { FriendScreen(navigation = navController) }
-                            composable(Screen.Settings.route) { SettingsScreen(navigation = navController, dataStore) }
-                            composable("EditProfileScreen"){ EditProfileScreen(navigation = navController, dataStore) }
+                            composable(Screen.Settings.route) { SettingsScreen(navigation = navController, dataStore, snackbarHostState) }
+                            composable("EditProfileScreen") { EditProfileScreen(navigation = navController, dataStore) }
                             // Add other composable destinations as needed here
                         }
                     }

@@ -16,7 +16,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavController
-import com.example.earthlink.R
 import com.example.earthlink.data.PreferencesKeys
 import com.example.earthlink.utils.getFilterFlow
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +27,7 @@ val contentPadding = 15.dp
 
 //main screen for settings screen, calls other composables
 @Composable
-fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
+fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     //Scaffold is the overall layout of the page, including topbar, floating action button, and
     //body components that make up the page
     Scaffold() { innerPadding ->
@@ -40,8 +39,8 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>)
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         ) {
             Spacer(modifier = Modifier.height(verticalSpacing))
-            Appearance(dataStore)
-            FilterSettings(dataStore)
+            Appearance(dataStore, snackbarHostState)
+            FilterSettings(dataStore, snackbarHostState)
             Notification()
             AccountSettings()
             HelpSupport()
@@ -53,7 +52,7 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>)
 
 // Composable component for the filter settings
 @Composable
-fun FilterSettings(dataStore: DataStore<Preferences>) {
+fun FilterSettings(dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     SettingHeader(text = "Message Filter")
 
     val currentFilterFlow: Flow<Boolean> = getFilterFlow(dataStore)
@@ -66,6 +65,11 @@ fun FilterSettings(dataStore: DataStore<Preferences>) {
     LaunchedEffect(allowProfanity) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.USER_FILTER_KEY] = allowProfanity
+        }
+        if (allowProfanity) {
+            snackbarHostState.showSnackbar("Profanity filter off")
+        } else {
+            snackbarHostState.showSnackbar("Profanity filter on")
         }
     }
 
@@ -107,9 +111,9 @@ fun Notification(){
 
 //Composable component for the appearance portion of the settings
 @Composable
-fun Appearance(dataStore: DataStore<Preferences>) {
+fun Appearance(dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     SettingHeader(text = "Appearance")
-    ThemeSelector(dataStore)
+    ThemeSelector(dataStore, snackbarHostState)
     Spacer(Modifier.height(12.dp))
 
 }
@@ -177,7 +181,7 @@ fun HelperCheckBox(
 // Column of radio buttons to swap between different themes
 // currently there is default, light, dark, brown, night
 @Composable
-fun ThemeSelector(dataStore: DataStore<Preferences>) {
+fun ThemeSelector(dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     val currentThemeFlow: Flow<String> = getThemeFlow(dataStore)
     val currentTheme by currentThemeFlow.collectAsState(initial = "default")
 
@@ -190,6 +194,7 @@ fun ThemeSelector(dataStore: DataStore<Preferences>) {
             dataStore.edit { preferences ->
                 preferences[PreferencesKeys.USER_THEME_KEY] = selectedTheme
             }
+            snackbarHostState.showSnackbar("Theme changed to $selectedTheme")
         }
     }
 
