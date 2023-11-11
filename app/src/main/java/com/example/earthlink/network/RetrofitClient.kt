@@ -41,19 +41,19 @@ object RetrofitHelper {
     }
 }
 
-suspend fun getMessagesRadius(latitude: Double, longitude: Double): Map<String, MessageListFormat>? {
+suspend fun getMessagesRadius(latitude: Double, longitude: Double): List<Message>? {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
 
-    // Use a try-catch to handle potential exceptions
     return try {
         val response = messagesService.getMessagesRadius(latitude, longitude).awaitResponse()
         if (response.isSuccessful) {
             response.body()
         } else {
-            null
+            null  // Or handle error response as appropriate
         }
     } catch (e: Exception) {
+        // Log the exception or handle it as needed
         null
     }
 }

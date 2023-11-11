@@ -9,11 +9,13 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface ApiService {
-    @GET("/getAllMessages")
-    suspend fun getMessagesRadius(latitude: Double, longitude: Double): Call<Map<String, MessageListFormat>>
-
+    @GET("/getMessagesByRadius/{latitude}/{longitude}")
+    fun getMessagesRadius(@Path("latitude") latitude: Double,
+                            @Path("longitude") longitude: Double
+    ): Call<List<Message>>
     @POST("/message")
     suspend fun postMessage(@Body message: Message): Call<PostMessageResponse>
 }

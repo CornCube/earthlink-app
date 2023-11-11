@@ -110,18 +110,29 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         }
     }
 
-    // Fetch and observe messages
-    val messages = remember { mutableStateOf<Map<String, MessageListFormat>>(mapOf()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            val response = getMessagesRadius(36.14775337693432, -86.80648818612099)
-            response?.let {
-                messages.value = it
+    // State to hold messages
+    var messages by remember { mutableStateOf<List<Message>?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = Unit) {
+        isLoading = true
+        coroutineScope.launch {
+            try {
+                messages = getMessagesRadius(0.0,0.0)
+            } catch (e: Exception) {
+                // Handle exceptions
+            } finally {
+                isLoading = false
             }
-            Log.d("Messages", messages.value.toString())
-            delay(5000)
         }
     }
+    if(messages == null){
+        Log.d("msg", "not working")
+    }
+    else{
+        Log.d("msg", "Is working")
+    }
+
 
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
@@ -129,13 +140,13 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         uiSettings = uiSettings,
         properties = mapProperties,
     ) {
-        messages.value.forEach { (key, value) ->
-            Marker(
-                state = MarkerState(position = LatLng(value.latitude, value.longitude)),
-                snippet = value.message_content,
-                title = value.user_uid,
-            )
-        }
+//        messages.value.forEach { (key, value) ->
+//            Marker(
+//                state = MarkerState(position = LatLng(value.latitude, value.longitude)),
+//                snippet = value.message_content,
+//                title = value.user_uid,
+//            )
+//        }
     }
 
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
