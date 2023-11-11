@@ -218,15 +218,16 @@ fun LocationButton(cameraPositionState: CameraPositionState, context: Context) {
 fun AddPost(onClick: () -> Unit, dataStore: DataStore<Preferences>) {
     var showAddPostModal by remember { mutableStateOf(false) }
 
-    FloatingActionButton(
+    ExtendedFloatingActionButton(
         modifier = Modifier.padding(bottom = 16.dp, end = 16.dp),
         onClick = { onClick() },
         containerColor = Color(0xff99b1ed),
     ) {
         Icon(
-            painter = painterResource(R.drawable.edit_24px),
+            painter = painterResource(R.drawable.add_24px),
             contentDescription = "Add button"
         )
+        Text("  Post")
     }
 
     if (showAddPostModal) {
