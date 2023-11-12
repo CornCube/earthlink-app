@@ -112,18 +112,16 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
 
     // State to hold messages
     var messages by remember { mutableStateOf<List<MessageListFormat>?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(key1 = Unit) {
-        isLoading = true
-        coroutineScope.launch {
+    LaunchedEffect(Unit) {
+        while(true) {
             try {
-                messages = getMessagesRadius(0.0,0.0)
+                val currentLocation = cameraPositionState.position.target
+                messages = getMessagesRadius(currentLocation.latitude, currentLocation.longitude)
             } catch (e: Exception) {
                 // Handle exceptions
-            } finally {
-                isLoading = false
             }
+            delay(5000)
         }
     }
     if(messages != null){

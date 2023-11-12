@@ -2,14 +2,8 @@ package com.example.earthlink
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.testing.TestNavHostController
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,29 +37,36 @@ class HomeScreenTests {
         composeTestRule.onNodeWithContentDescription("Add button").assertIsDisplayed()
     }
 
-//    @Test
-//    fun test_ClickingAddPostButton_ShowsAddPostModal() {
-//        composeTestRule.onNodeWithContentDescription("Add button").performClick()
-//        // Assuming you have a unique content description or text in the AddPostModal
-//        composeTestRule.onNodeWithText("Add Post Modal Unique Text").assertIsDisplayed()
-//    }
+    @Test
+    fun test_MapVisibility() {
+        composeTestRule.onNodeWithTag("GoogleMap").assertIsDisplayed()
+    }
 
-//    @Test
-//    fun test_ClickingProfileButton_NavigatesToProfileScreen() {
-//        val navController = TestNavHostController(
-//            ApplicationProvider.getApplicationContext()
-//        ).apply {
-//            setGraph(R.navigation.nav_graph) // Use your actual navigation graph resource id
-//            setCurrentState(State.CREATED)
-//        }
-//        composeTestRule.setContent {
-//            EarthLinkApp(navController = navController)
-//        }
-//
-//        composeTestRule.onNodeWithContentDescription("Profile button").performClick()
-//
-//        assertEquals("ProfileScreen", navController.currentDestination?.route)
-//    }
+    @Test
+    fun test_SnackbarDisplay_WhenLoggedIn() {
+        composeTestRule.onNodeWithText("Logged in as user").assertIsDisplayed()
+    }
 
-    // Additional tests for other navigation buttons and UI components
+    @Test
+    fun test_ProfileNavigation_FromMainMenu() {
+        composeTestRule.onNodeWithContentDescription("Main menu button").performClick()
+        composeTestRule.onNodeWithContentDescription("Profile button").performClick()
+        // Assert navigation to Profile screen
+    }
+
+    @Test
+    fun test_FriendsNavigation_FromMainMenu() {
+        composeTestRule.onNodeWithContentDescription("Main menu button").performClick()
+        composeTestRule.onNodeWithContentDescription("Friends button").performClick()
+        // Assert navigation to Friends screen
+    }
+
+    @Test
+    fun test_SettingsNavigation_FromMainMenu() {
+        composeTestRule.onNodeWithContentDescription("Main menu button").performClick()
+        composeTestRule.onNodeWithContentDescription("Settings button").performClick()
+        // Assert navigation to Settings screen
+    }
+
+    // Additional specific tests can be added as required
 }
