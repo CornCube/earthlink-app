@@ -111,7 +111,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
     }
 
     // State to hold messages
-    var messages by remember { mutableStateOf<List<Message>?>(null) }
+    var messages by remember { mutableStateOf<List<MessageListFormat>?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = Unit) {
@@ -126,11 +126,11 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             }
         }
     }
-    if(messages == null){
-        Log.d("msg", "not working")
+    if(messages != null){
+        Log.d("msg", messages.toString())
     }
     else{
-        Log.d("msg", "Is working")
+        Log.d("msg", "not working")
     }
 
 
@@ -140,13 +140,13 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         uiSettings = uiSettings,
         properties = mapProperties,
     ) {
-//        messages.value.forEach { (key, value) ->
-//            Marker(
-//                state = MarkerState(position = LatLng(value.latitude, value.longitude)),
-//                snippet = value.message_content,
-//                title = value.user_uid,
-//            )
-//        }
+        messages?.forEach { message ->
+            Marker(
+                state = MarkerState(position = LatLng(message.latitude, message.longitude)),
+                snippet = message.message_content,
+                title = message.user_uid,
+            )
+        }
     }
 
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {

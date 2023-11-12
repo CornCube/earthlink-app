@@ -41,7 +41,7 @@ object RetrofitHelper {
     }
 }
 
-suspend fun getMessagesRadius(latitude: Double, longitude: Double): List<Message>? {
+suspend fun getMessagesRadius(latitude: Double, longitude: Double): List<MessageListFormat>? {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
 
