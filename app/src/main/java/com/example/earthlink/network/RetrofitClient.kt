@@ -4,9 +4,14 @@ import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.earthlink.model.LoginData
+import com.example.earthlink.model.LoginResponse
 import com.example.earthlink.model.Message
 import com.example.earthlink.model.MessageListFormat
 import com.example.earthlink.model.PostMessageResponse
+import com.example.earthlink.model.SignUpData
+import com.example.earthlink.model.SignUpResponse
+import com.example.earthlink.model.ValidateResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import retrofit2.Retrofit
@@ -71,6 +76,54 @@ suspend fun postMessage(message: Message): PostMessageResponse? {
             null
         }
     } catch (e: Exception) {
+        null
+    }
+}
+
+suspend fun signUp(userData: SignUpData): SignUpResponse? {
+    val retrofit = RetrofitHelper.getInstance()
+    val signUpService = retrofit.create(ApiService::class.java)
+
+    return try {
+        val response = signUpService.signUpUser(userData)
+        if (response.isSuccessful) {
+            response.body()
+        } else {
+            null
+        }
+    } catch (e : Exception){
+        null
+    }
+}
+
+suspend fun login(userData: LoginData): LoginResponse? {
+    val retrofit = RetrofitHelper.getInstance()
+    val loginService = retrofit.create(ApiService::class.java)
+
+    return try {
+        val response = loginService.loginUser(userData)
+        if(response.isSuccessful){
+            response.body()
+        } else {
+            null
+        }
+    } catch (e: Exception){
+        null
+    }
+}
+
+suspend fun validateToken(token: String): ValidateResponse? {
+    val retrofit = RetrofitHelper.getInstance()
+    val validateService = retrofit.create(ApiService::class.java)
+
+    return try {
+        val response = validateService.validateToken(token)
+        if(response.isSuccessful){
+            response.body()
+        } else {
+            null
+        }
+    } catch (e: Exception){
         null
     }
 }

@@ -8,16 +8,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.navigation.compose.*
+import androidx.core.content.ContextCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.earthlink.ui.*
 import com.example.earthlink.ui.theme.EarthLinkTheme
 import com.example.earthlink.utils.*
+import android.content.pm.PackageManager
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 
 class MainActivity : ComponentActivity() {
     private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -31,42 +36,29 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     var hasLocationPermission by remember {
-                        mutableStateOf(checkForPermission(this))
+                        mutableStateOf(checkForPermission(this@MainActivity))
                     }
 
-                    // Determine if the bottom bar should be shown
-                    val shouldShowBottomBar = navController.currentBackStackEntryAsState().value?.destination?.route in listOf(
-                        Screen.Home.route,
-                        Screen.Friends.route,
-                        Screen.Profile.route,
-                        Screen.Settings.route
-                    )
-
                     Scaffold(
-                        bottomBar = {
-                            if (shouldShowBottomBar) {
-                                BottomNavigationBar(navController = navController)
-                            }
-                        },
-                        snackbarHost = {
-                            SnackbarHost(hostState = snackbarHostState)
-                        }
+                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
                     ) { innerPadding ->
                         NavHost(
                             navController = navController,
-                            startDestination = "LoginScreen",
+                            startDestination = if (hasLocationPermission) "login" else "permissions",
                             Modifier.padding(innerPadding)
                         ) {
-                            composable("LoginScreen") {
-                                LoginScreen(
-                                    onPermissionGranted = {
-                                        hasLocationPermission = true
-                                        navController.navigate(Screen.Home.route) {
-                                            popUpTo("LoginScreen") { inclusive = true }
-                                        }
+                            composable("permissions") {
+                                LocationPermissionScreen(onPermissionGranted = {
+                                    hasLocationPermission = true
+                                    navController.navigate("login") {
+                                        popUpTo("permissions") { inclusive = true }
                                     }
-                                )
+                                })
                             }
+                            composable("login") { LoginScreen(navController) }
+                            composable("signup") { SignUpScreen(navController) }
+
+                            // Your existing composable destinations
                             composable(Screen.Home.route) { Main(navigation = navController, dataStore, snackbarHostState) }
                             composable(Screen.Profile.route) { ProfileScreen(navigation = navController, dataStore) }
                             composable(Screen.Friends.route) { FriendScreen(navigation = navController) }
@@ -78,5 +70,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun checkForPermission(context: ComponentActivity): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }

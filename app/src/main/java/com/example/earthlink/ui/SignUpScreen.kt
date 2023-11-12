@@ -1,5 +1,5 @@
 package com.example.earthlink.ui
-import android.util.Log
+
 import androidx.compose.runtime.*
 import androidx.compose.material.*
 import androidx.compose.foundation.layout.*
@@ -9,26 +9,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.earthlink.model.LoginData
-import com.example.earthlink.network.login
-import com.example.earthlink.network.validateToken
-import com.example.earthlink.utils.Screen
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.example.earthlink.model.SignUpData
+import com.example.earthlink.network.signUp
+import kotlinx.coroutines.*
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun SignUpScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     fun filterValidCharacters(input: String): String {
         return input.filter { it.isLetterOrDigit() || it in listOf('_', '-', '@', '.', '!', '#', '$', '%', '&', '*', '+') }
     }
 
-    val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
+    val isSignUpEnabled = email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
 
     Column(
         modifier = Modifier
@@ -37,9 +33,10 @@ fun LoginScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // TextField components for email, password, and confirmPassword
         OutlinedTextField(
             value = email,
-            onValueChange = { email = filterValidCharacters(it)  },
+            onValueChange = { email = filterValidCharacters(it) },
             label = { Text("Email") }
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -49,7 +46,13 @@ fun LoginScreen(navController: NavController) {
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation()
         )
-
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = filterValidCharacters(it) },
+            label = { Text("Confirm Password") },
+            visualTransformation = PasswordVisualTransformation()
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         if (loading) {
@@ -60,46 +63,35 @@ fun LoginScreen(navController: NavController) {
             Text(text = errorMessage, color = Color.Red)
         }
 
-
         Button(onClick = {
+            if (password != confirmPassword) {
+                errorMessage = "Passwords do not match"
+                return@Button
+            }
             loading = true
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = login(LoginData(email, password))
-                    response?.let {
-                        val token = it.token
-                        val userID = validateToken(token)
-                        Log.d("user", userID.toString())
-                        withContext(Dispatchers.Main) {
-                            //MAKE SURE TO RREMEMBER THIS USERID
-                            if (userID != null) {
-                                navController.navigate(Screen.Home.route)
-                            } else {
-                                errorMessage = "Login Failed"
-                            }
+                    val response = signUp(SignUpData( email, password))
+                    withContext(Dispatchers.Main) {
+                        if (response != null) {
+                            navController.navigate("login")
+                        } else {
+                            errorMessage = "Sign up failed: ${response}"
                         }
-                    } ?: run {
-                        withContext(Dispatchers.Main) {
-                            errorMessage = "Login failed failed: Incorrect credentials"
-                        }
+                        loading = false
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         errorMessage = "Error: ${e.localizedMessage}"
-                    }
-                } finally {
-                    withContext(Dispatchers.Main) {
                         loading = false
                     }
                 }
             }
-        }, enabled = isLoginEnabled) {
-            Text("Login")
-        }
-        Button(onClick = {
-            navController.navigate("signup")
-        }){
+        }, enabled = isSignUpEnabled) {
             Text("Sign Up")
+        }
+        Button(onClick = { navController.navigate("login") }) {
+            Text("Back to Login")
         }
     }
 }
