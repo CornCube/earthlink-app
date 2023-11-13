@@ -25,8 +25,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.navigation.NavController
 import com.example.earthlink.R
+import com.example.earthlink.model.MessageListFormat
 import com.example.earthlink.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
+import com.example.earthlink.network.getMessagesFromUser
+import com.example.earthlink.network.deleteMessage
+import kotlinx.coroutines.delay
 
 @Composable
 fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
@@ -53,20 +57,9 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) 
                 UserMilestones()
             }
         }
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Box(
-                modifier = Modifier.padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                TopPosts()
-            }
-        }
+        Posts()
     }
-    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         EditProfileButton(navigation = navigation)
     }
 }
@@ -137,7 +130,7 @@ fun EditProfileButton(navigation: NavController) {
     FloatingActionButton(
         onClick = { navigation.navigate("EditProfileScreen") },
         modifier = Modifier
-            .padding(bottom = 16.dp, end = 16.dp),
+            .padding(top = 48.dp, end = 16.dp),
         containerColor = Color(0xff99b1ed),
     ) {
         Icon(
@@ -183,46 +176,59 @@ fun UserMilestones() {
 data class Achievement(val name: String, val stats: String)
 
 val achievements = listOf(
-    Achievement("Achievement 1", "10 points"),
-    Achievement("Achievement 2", "20 points"),
-    Achievement("Achievement 3", "30 points")
+    Achievement("Post 10 messages", "10 points"),
+    Achievement("Post 100 messages", "20 points"),
+    Achievement("Post 1000 messages", "30 points")
 )
-
-@Composable
-fun TopPosts() {
-    Column {
-        Text("Top Posts", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        LazyRow(
-            content = {
-                items(posts) { post ->
-                    PostCard(post)
-                }
-            }
-        )
-    }
-}
 
 data class Post(val title: String, val content: String, val author: String)
 
-val posts = listOf(
-    Post("Post 1", "Content for post 1", "Author 1"),
-    Post("Post 2", "Content for post 2", "Author 2"),
-    Post("Post 3", "Content for post 3", "Author 3")
-)
+@Composable
+fun Posts() {
+    var posts by remember { mutableStateOf<Map<String, MessageListFormat>?>(null) }
+
+    LaunchedEffect(Unit) {
+        while(true) {
+            try {
+                posts = getMessagesFromUser("corn")
+            } catch (e: Exception) {
+                // Handle exceptions
+            }
+            delay(5000)
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .padding(start = 12.dp)
+            .padding(16.dp),
+    ) {
+        Text("Posts", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+    }
+    Column(
+        modifier = Modifier
+            .padding(start = contentPadding, end = contentPadding)
+            .verticalScroll(rememberScrollState(), flingBehavior = null),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        posts?.forEach { post ->
+            PostCard(post)
+        }
+    }
+}
 
 @Composable
-fun PostCard(post: Post) {
+fun PostCard(post: Map.Entry<String, MessageListFormat>) {
     Card(
         modifier = Modifier
-            .width(200.dp)
-            .padding(8.dp)
+            .fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(18.dp)
         ) {
-            Text(text = post.title, fontWeight = FontWeight.Bold)
-            Text(text = post.content, style = TextStyle(fontSize = 14.sp))
-            Text(text = "By ${post.author}", style = TextStyle(fontSize = 12.sp))
+            Text(text = post.value.message_content, style = TextStyle(fontSize = 16.sp))
+            Text(text = post.value.timeStamp.toString(), style = TextStyle(fontSize = 14.sp))
+            Text(text = "By ${post.value.user_uid}", style = TextStyle(fontSize = 12.sp))
         }
     }
 }

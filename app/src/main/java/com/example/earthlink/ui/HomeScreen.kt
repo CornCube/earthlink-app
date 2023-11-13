@@ -28,7 +28,6 @@ import com.example.earthlink.network.*
 import com.example.earthlink.utils.getCurrentLocation
 import com.example.earthlink.utils.getFilterFlow
 import com.example.earthlink.utils.getThemeFlow
-import com.example.earthlink.utils.parseMessages
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
