@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 })
                             }
-                            composable("login") { LoginScreen(navController) }
+                            composable("login") { LoginScreen(navController, dataStore) }
                             composable("signup") { SignUpScreen(navController) }
 
                             // Your existing composable destinations

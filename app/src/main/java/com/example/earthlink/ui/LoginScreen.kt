@@ -8,11 +8,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavController
+import com.example.earthlink.data.PreferencesKeys
 import com.example.earthlink.model.LoginData
 import com.example.earthlink.network.login
 import com.example.earthlink.network.validateToken
 import com.example.earthlink.utils.Screen
+import com.example.earthlink.utils.getUserFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -20,7 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, dataStore: DataStore<Preferences>) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
@@ -30,6 +35,9 @@ fun LoginScreen(navController: NavController) {
     }
 
     val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
+
+    val userFlow = getUserFlow(dataStore)
+    val user by userFlow.collectAsState(initial = "")
 
     Column(
         modifier = Modifier
@@ -70,7 +78,10 @@ fun LoginScreen(navController: NavController) {
                     response?.let {
                         val token = it.token
                         val userID = validateToken(token)
-                        Log.d("user", userID.toString())
+                        Log.d("user", userID.toString().substringAfter("userID=").substringBefore(")"))
+                        dataStore.edit { preferences ->
+                            preferences[PreferencesKeys.USER_ID_KEY] = userID.toString().substringAfter("userID=").substringBefore(")")
+                        }
                         withContext(Dispatchers.Main) {
                             //MAKE SURE TO RREMEMBER THIS USERID
                             if (userID != null) {

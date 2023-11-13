@@ -28,6 +28,7 @@ import com.example.earthlink.network.*
 import com.example.earthlink.utils.getCurrentLocation
 import com.example.earthlink.utils.getFilterFlow
 import com.example.earthlink.utils.getThemeFlow
+import com.example.earthlink.utils.getUserFlow
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
@@ -37,7 +38,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
-    val user = "corn"
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -48,6 +48,10 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
+
+    // get user
+    val userFlow = getUserFlow(dataStore)
+    val user by userFlow.collectAsState(initial = "")
 
     // theme state
     val themeFlow = getThemeFlow(dataStore)

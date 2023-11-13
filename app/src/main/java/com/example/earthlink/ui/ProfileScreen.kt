@@ -31,6 +31,7 @@ import com.example.earthlink.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
 import com.example.earthlink.network.getMessagesFromUser
 import com.example.earthlink.network.deleteMessage
+import com.example.earthlink.utils.getUserFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +41,9 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
     var posts by remember { mutableStateOf<Map<String, MessageListFormat>?>(null) }
     var refresh by remember { mutableStateOf(true) }
 
+    val userFlow = getUserFlow(dataStore)
+    val user by userFlow.collectAsState(initial = "")
+
     val onRefreshChange = { newRefresh: Boolean ->
         refresh = newRefresh
     }
@@ -47,7 +51,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
     LaunchedEffect(refresh) {
         if (refresh) {
             try {
-                posts = getMessagesFromUser("corn")
+                posts = getMessagesFromUser(user)
             } catch (e: Exception) {
                 // Handle exceptions
             }
@@ -64,7 +68,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
         ) {
             ProfilePicture(dataStore)
             Spacer(modifier = Modifier.width(16.dp))
-            UserInfo(dataStore)
+            UserInfo(dataStore, user)
         }
         Card(
             modifier = Modifier
@@ -119,7 +123,7 @@ fun ProfilePicture(dataStore: DataStore<Preferences>) {
 }
 
 @Composable
-fun UserInfo(dataStore: DataStore<Preferences>) {
+fun UserInfo(dataStore: DataStore<Preferences>, user: String) {
     val bioBlow: Flow<String> = getBioFlow(dataStore)
     val bio by bioBlow.collectAsState(initial = "Personal Info")
 
@@ -129,7 +133,7 @@ fun UserInfo(dataStore: DataStore<Preferences>) {
             .padding(2.dp)
     ) {
         Text(
-            text = "John Doe",
+            text = user,
             style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 30.sp)
         )
         Text(

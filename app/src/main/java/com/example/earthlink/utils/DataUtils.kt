@@ -41,3 +41,12 @@ fun getBioFlow(dataStore: DataStore<Preferences>): Flow<String> {
 
     return bioFlow
 }
+
+fun getUserFlow(dataStore: DataStore<Preferences>): Flow<String> {
+    val userFlow: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_ID_KEY] ?: ""
+        }
+
+    return userFlow
+}
