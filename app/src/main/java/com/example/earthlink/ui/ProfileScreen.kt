@@ -33,12 +33,28 @@ import com.example.earthlink.network.getMessagesFromUser
 import com.example.earthlink.network.deleteMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
+    var posts by remember { mutableStateOf<Map<String, MessageListFormat>?>(null) }
+    var refresh by remember { mutableStateOf(true) }
+
+    val onRefreshChange = { newRefresh: Boolean ->
+        refresh = newRefresh
+    }
+
+    LaunchedEffect(refresh) {
+        if (refresh) {
+            try {
+                posts = getMessagesFromUser("corn")
+            } catch (e: Exception) {
+                // Handle exceptions
+            }
+            refresh = false
+        }
+    }
+
     Column {
         Row(
             modifier = Modifier
@@ -62,7 +78,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
                 UserMilestones()
             }
         }
-        Posts(snackbarHostState)
+        Posts(posts, snackbarHostState, onRefreshChange)
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         EditProfileButton(navigation = navigation)
@@ -187,17 +203,11 @@ val achievements = listOf(
 )
 
 @Composable
-fun Posts(snackbarHostState: SnackbarHostState) {
-    var posts by remember { mutableStateOf<Map<String, MessageListFormat>?>(null) }
-
-    LaunchedEffect(Unit) {
-        try {
-            posts = getMessagesFromUser("corn")
-        } catch (e: Exception) {
-            // Handle exceptions
-        }
-    }
-
+fun Posts(
+    posts: Map<String, MessageListFormat>?,
+    snackbarHostState: SnackbarHostState,
+    onRefreshChange: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier
             .padding(start = 12.dp)
@@ -212,7 +222,7 @@ fun Posts(snackbarHostState: SnackbarHostState) {
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         posts?.forEach { post ->
-            PostCard(post, snackbarHostState)
+            PostCard(post, snackbarHostState, onRefreshChange)
         }
     }
 }
@@ -221,6 +231,7 @@ fun Posts(snackbarHostState: SnackbarHostState) {
 fun DeleteButton(
     messageId: String,
     snackbarHostState: SnackbarHostState,
+    onRefreshChange: (Boolean) -> Unit,
 ) {
     var showDeleteSnackbar by remember { mutableStateOf(false) }
 
@@ -236,6 +247,7 @@ fun DeleteButton(
                 } catch (e: Exception) {
                     // Handle exceptions
                 }
+                onRefreshChange(true)
             }
         },
         modifier = Modifier
@@ -262,6 +274,7 @@ fun DeleteButton(
 fun PostCard(
     post: Map.Entry<String, MessageListFormat>,
     snackbarHostState: SnackbarHostState,
+    onRefreshChange: (Boolean) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -285,7 +298,7 @@ fun PostCard(
                     .fillMaxWidth()
                     .align(Alignment.TopEnd)
             ) {
-                DeleteButton(post.key, snackbarHostState)
+                DeleteButton(post.key, snackbarHostState, onRefreshChange)
             }
         }
     }
