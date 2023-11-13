@@ -19,6 +19,7 @@ import android.content.pm.PackageManager
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 class MainActivity : ComponentActivity() {
     private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -39,8 +40,20 @@ class MainActivity : ComponentActivity() {
                         mutableStateOf(checkForPermission(this@MainActivity))
                     }
 
+                    val shouldShowBottomBar = navController.currentBackStackEntryAsState().value?.destination?.route in listOf(
+                        Screen.Home.route,
+                        Screen.Friends.route,
+                        Screen.Profile.route,
+                        Screen.Settings.route
+                    )
+
                     Scaffold(
-                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                        bottomBar = {
+                            if (shouldShowBottomBar) {
+                                BottomNavigationBar(navController = navController)
+                            }
+                        },
                     ) { innerPadding ->
                         NavHost(
                             navController = navController,
