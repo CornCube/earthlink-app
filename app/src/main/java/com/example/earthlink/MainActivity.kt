@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
 
                             // Your existing composable destinations
                             composable(Screen.Home.route) { Main(navigation = navController, dataStore, snackbarHostState) }
-                            composable(Screen.Profile.route) { ProfileScreen(navigation = navController, dataStore) }
+                            composable(Screen.Profile.route) { ProfileScreen(navigation = navController, dataStore, snackbarHostState) }
                             composable(Screen.Friends.route) { FriendScreen(navigation = navController) }
                             composable(Screen.Settings.route) { SettingsScreen(navigation = navController, dataStore, snackbarHostState) }
                             composable("EditProfileScreen") { EditProfileScreen(navigation = navController, dataStore) }

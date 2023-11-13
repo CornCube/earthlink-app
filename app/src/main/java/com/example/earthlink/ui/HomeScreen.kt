@@ -120,7 +120,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             } catch (e: Exception) {
                 // Handle exceptions
             }
-            delay(5000)
+            delay(10000)
         }
     }
     if(messages != null){
@@ -193,6 +193,8 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
 fun ProfanityCheck(message: String, filterEnabled: Boolean): String {
     return if (!filterEnabled) {
         message.replace("fuck", "****", ignoreCase = true)
+        message.replace("shit", "****", ignoreCase = true)
+        message.replace("crap", "****", ignoreCase = true)
     } else {
         message
     }

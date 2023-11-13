@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -30,10 +31,14 @@ import com.example.earthlink.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
 import com.example.earthlink.network.getMessagesFromUser
 import com.example.earthlink.network.deleteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
-fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
+fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     Column {
         Row(
             modifier = Modifier
@@ -57,7 +62,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) 
                 UserMilestones()
             }
         }
-        Posts()
+        Posts(snackbarHostState)
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         EditProfileButton(navigation = navigation)
@@ -181,20 +186,15 @@ val achievements = listOf(
     Achievement("Post 1000 messages", "30 points")
 )
 
-data class Post(val title: String, val content: String, val author: String)
-
 @Composable
-fun Posts() {
+fun Posts(snackbarHostState: SnackbarHostState) {
     var posts by remember { mutableStateOf<Map<String, MessageListFormat>?>(null) }
 
     LaunchedEffect(Unit) {
-        while(true) {
-            try {
-                posts = getMessagesFromUser("corn")
-            } catch (e: Exception) {
-                // Handle exceptions
-            }
-            delay(5000)
+        try {
+            posts = getMessagesFromUser("corn")
+        } catch (e: Exception) {
+            // Handle exceptions
         }
     }
 
@@ -212,25 +212,81 @@ fun Posts() {
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         posts?.forEach { post ->
-            PostCard(post)
+            PostCard(post, snackbarHostState)
         }
     }
 }
 
 @Composable
-fun PostCard(post: Map.Entry<String, MessageListFormat>) {
-    Card(
+fun DeleteButton(
+    messageId: String,
+    snackbarHostState: SnackbarHostState,
+) {
+    var showDeleteSnackbar by remember { mutableStateOf(false) }
+
+    IconButton(
+        onClick = {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    showDeleteSnackbar = true
+                    val response = deleteMessage(messageId)
+                    response?.let {
+                        Log.d("user", it)
+                    }
+                } catch (e: Exception) {
+                    // Handle exceptions
+                }
+            }
+        },
         modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp)
-        ) {
-            Text(text = post.value.message_content, style = TextStyle(fontSize = 16.sp))
-            Text(text = post.value.timeStamp.toString(), style = TextStyle(fontSize = 14.sp))
-            Text(text = "By ${post.value.user_uid}", style = TextStyle(fontSize = 12.sp))
+            .padding(start = 300.dp, top = 8.dp)
+            .fillMaxWidth(),
+        colors = IconButtonDefaults.iconButtonColors(contentColor = Color.Red),
+        content = {
+            Icon(
+                painter = painterResource(R.drawable.delete_24px),
+                contentDescription = "Delete Message"
+            )
+        }
+    )
+
+    LaunchedEffect(showDeleteSnackbar) {
+        if (showDeleteSnackbar) {
+            snackbarHostState.showSnackbar("Message deleted")
+            showDeleteSnackbar = false
         }
     }
 }
 
-
+@Composable
+fun PostCard(
+    post: Map.Entry<String, MessageListFormat>,
+    snackbarHostState: SnackbarHostState,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .padding(18.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Text(text = post.value.message_content, style = TextStyle(fontSize = 16.sp))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = post.value.timeStamp.toString(), style = TextStyle(fontSize = 14.sp))
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = "By ${post.value.user_uid}", style = TextStyle(fontSize = 12.sp))
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopEnd)
+            ) {
+                DeleteButton(post.key, snackbarHostState)
+            }
+        }
+    }
+}
