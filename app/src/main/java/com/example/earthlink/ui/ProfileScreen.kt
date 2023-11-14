@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -25,11 +26,39 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.navigation.NavController
 import com.example.earthlink.R
+import com.example.earthlink.model.MessageListFormat
 import com.example.earthlink.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
+import com.example.earthlink.network.getMessagesFromUser
+import com.example.earthlink.network.deleteMessage
+import com.example.earthlink.utils.getUserFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) {
+fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
+    var posts by remember { mutableStateOf<Map<String, MessageListFormat>?>(null) }
+    var refresh by remember { mutableStateOf(true) }
+
+    val userFlow = getUserFlow(dataStore)
+    val user by userFlow.collectAsState(initial = "")
+
+    val onRefreshChange = { newRefresh: Boolean ->
+        refresh = newRefresh
+    }
+
+    LaunchedEffect(refresh) {
+        if (refresh) {
+            try {
+                posts = getMessagesFromUser(user)
+            } catch (e: Exception) {
+                // Handle exceptions
+            }
+            refresh = false
+        }
+    }
+
     Column {
         Row(
             modifier = Modifier
@@ -39,7 +68,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) 
         ) {
             ProfilePicture(dataStore)
             Spacer(modifier = Modifier.width(16.dp))
-            UserInfo(dataStore)
+            UserInfo(dataStore, user)
         }
         Card(
             modifier = Modifier
@@ -53,20 +82,9 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>) 
                 UserMilestones()
             }
         }
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Box(
-                modifier = Modifier.padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                TopPosts()
-            }
-        }
+        Posts(posts, snackbarHostState, onRefreshChange)
     }
-    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+    Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         EditProfileButton(navigation = navigation)
     }
 }
@@ -105,7 +123,7 @@ fun ProfilePicture(dataStore: DataStore<Preferences>) {
 }
 
 @Composable
-fun UserInfo(dataStore: DataStore<Preferences>) {
+fun UserInfo(dataStore: DataStore<Preferences>, user: String) {
     val bioBlow: Flow<String> = getBioFlow(dataStore)
     val bio by bioBlow.collectAsState(initial = "Personal Info")
 
@@ -115,7 +133,7 @@ fun UserInfo(dataStore: DataStore<Preferences>) {
             .padding(2.dp)
     ) {
         Text(
-            text = "John Doe",
+            text = user,
             style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 30.sp)
         )
         Text(
@@ -137,7 +155,7 @@ fun EditProfileButton(navigation: NavController) {
     FloatingActionButton(
         onClick = { navigation.navigate("EditProfileScreen") },
         modifier = Modifier
-            .padding(bottom = 16.dp, end = 16.dp),
+            .padding(top = 48.dp, end = 16.dp),
         containerColor = Color(0xff99b1ed),
     ) {
         Icon(
@@ -183,48 +201,109 @@ fun UserMilestones() {
 data class Achievement(val name: String, val stats: String)
 
 val achievements = listOf(
-    Achievement("Achievement 1", "10 points"),
-    Achievement("Achievement 2", "20 points"),
-    Achievement("Achievement 3", "30 points")
+    Achievement("Post 10 messages", "10 points"),
+    Achievement("Post 100 messages", "20 points"),
+    Achievement("Post 1000 messages", "30 points")
 )
 
 @Composable
-fun TopPosts() {
-    Column {
-        Text("Top Posts", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        LazyRow(
-            content = {
-                items(posts) { post ->
-                    PostCard(post)
-                }
-            }
-        )
-    }
-}
-
-data class Post(val title: String, val content: String, val author: String)
-
-val posts = listOf(
-    Post("Post 1", "Content for post 1", "Author 1"),
-    Post("Post 2", "Content for post 2", "Author 2"),
-    Post("Post 3", "Content for post 3", "Author 3")
-)
-
-@Composable
-fun PostCard(post: Post) {
-    Card(
+fun Posts(
+    posts: Map<String, MessageListFormat>?,
+    snackbarHostState: SnackbarHostState,
+    onRefreshChange: (Boolean) -> Unit
+) {
+    Row(
         modifier = Modifier
-            .width(200.dp)
-            .padding(8.dp)
+            .padding(start = 12.dp)
+            .padding(16.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Text(text = post.title, fontWeight = FontWeight.Bold)
-            Text(text = post.content, style = TextStyle(fontSize = 14.sp))
-            Text(text = "By ${post.author}", style = TextStyle(fontSize = 12.sp))
+        Text("Posts", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+    }
+    Column(
+        modifier = Modifier
+            .padding(start = contentPadding, end = contentPadding)
+            .verticalScroll(rememberScrollState(), flingBehavior = null),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        posts?.forEach { post ->
+            PostCard(post, snackbarHostState, onRefreshChange)
         }
     }
 }
 
+@Composable
+fun DeleteButton(
+    messageId: String,
+    snackbarHostState: SnackbarHostState,
+    onRefreshChange: (Boolean) -> Unit,
+) {
+    var showDeleteSnackbar by remember { mutableStateOf(false) }
 
+    IconButton(
+        onClick = {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    showDeleteSnackbar = true
+                    val response = deleteMessage(messageId)
+                    response?.let {
+                        Log.d("user", it)
+                    }
+                } catch (e: Exception) {
+                    // Handle exceptions
+                }
+                onRefreshChange(true)
+            }
+        },
+        modifier = Modifier
+            .padding(start = 300.dp, top = 8.dp)
+            .fillMaxWidth(),
+        colors = IconButtonDefaults.iconButtonColors(contentColor = Color.Red),
+        content = {
+            Icon(
+                painter = painterResource(R.drawable.delete_24px),
+                contentDescription = "Delete Message"
+            )
+        }
+    )
+
+    LaunchedEffect(showDeleteSnackbar) {
+        if (showDeleteSnackbar) {
+            snackbarHostState.showSnackbar("Message deleted")
+            showDeleteSnackbar = false
+        }
+    }
+}
+
+@Composable
+fun PostCard(
+    post: Map.Entry<String, MessageListFormat>,
+    snackbarHostState: SnackbarHostState,
+    onRefreshChange: (Boolean) -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .padding(18.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Text(text = post.value.message_content, style = TextStyle(fontSize = 16.sp))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = post.value.timeStamp.toString(), style = TextStyle(fontSize = 14.sp))
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = "By ${post.value.user_uid}", style = TextStyle(fontSize = 12.sp))
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopEnd)
+            ) {
+                DeleteButton(post.key, snackbarHostState, onRefreshChange)
+            }
+        }
+    }
+}
