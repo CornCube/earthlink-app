@@ -1,5 +1,6 @@
 package com.example.earthlink.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -158,7 +159,6 @@ fun HelperButton(text: String){
     }
 }
 
-// Helper function that creates a checkbox
 @Composable
 fun HelperCheckBox(
     text: String,
@@ -166,14 +166,21 @@ fun HelperCheckBox(
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }, // Add clickable modifier here
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text, textAlign = TextAlign.Center, fontSize = 20.sp)
+        Text(
+            text = text,
+            textAlign = TextAlign.Start,
+            fontSize = 20.sp
+        )
         Checkbox(
             modifier = Modifier.size(32.dp),
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = null // Remove the direct click action from the Checkbox
         )
     }
 }
@@ -214,11 +221,17 @@ fun ThemeSelector(dataStore: DataStore<Preferences>, snackbarHostState: Snackbar
 
 @Composable
 fun ThemeRadioButton(themeName: String, selectedTheme: String, onThemeSelected: (String) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onThemeSelected(themeName) } // Add clickable modifier here
+    ) {
         RadioButton(
             selected = selectedTheme == themeName,
-            onClick = { onThemeSelected(themeName) }
+            onClick = null // Remove the direct click action from the RadioButton
         )
         Text(text = themeName)
     }
 }
+

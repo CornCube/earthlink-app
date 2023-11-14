@@ -127,13 +127,15 @@ fun UserInfo(dataStore: DataStore<Preferences>, user: String) {
     val bioBlow: Flow<String> = getBioFlow(dataStore)
     val bio by bioBlow.collectAsState(initial = "Personal Info")
 
+    val displayedUser = if (user.length > 10) user.take(10) + "..." else user
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(2.dp)
     ) {
         Text(
-            text = user,
+            text = displayedUser,
             style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 30.sp)
         )
         Text(
@@ -155,7 +157,8 @@ fun EditProfileButton(navigation: NavController) {
     FloatingActionButton(
         onClick = { navigation.navigate("EditProfileScreen") },
         modifier = Modifier
-            .padding(top = 48.dp, end = 16.dp),
+            .padding(top = 48.dp, end = 16.dp)
+            .testTag("editProfileButton"), // Adding a test tag
         containerColor = Color(0xff99b1ed),
     ) {
         Icon(

@@ -92,7 +92,7 @@ fun LoginScreen(navController: NavController, dataStore: DataStore<Preferences>)
                         }
                     } ?: run {
                         withContext(Dispatchers.Main) {
-                            errorMessage = "Login failed failed: Incorrect credentials"
+                            errorMessage = "Login failed: Incorrect credentials"
                         }
                     }
                 } catch (e: Exception) {

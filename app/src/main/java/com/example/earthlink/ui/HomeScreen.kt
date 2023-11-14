@@ -66,7 +66,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             "Night" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.nightmap)
             else -> mapStyle
         }
-        snackbarHostState.showSnackbar("Logged in as $user")
+//        snackbarHostState.showSnackbar("Logged in as $user")
     }
 
     var uiSettings by remember { mutableStateOf(MapUiSettings()) }
@@ -214,7 +214,8 @@ fun LocationButton(cameraPositionState: CameraPositionState, context: Context) {
 
     FloatingActionButton(
         modifier = Modifier
-            .padding(bottom = 100.dp, end = 16.dp),
+            .padding(bottom = 100.dp, end = 16.dp)
+            .testTag("locationButton"),
         onClick = {
             getCurrentLocation(context) { location ->
                 coroutineScope.launch {
