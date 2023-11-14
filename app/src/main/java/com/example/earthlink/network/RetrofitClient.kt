@@ -26,7 +26,7 @@ import retrofit2.awaitResponse
 
 object RetrofitHelper {
 
-    val baseUrl = "http://10.0.2.2:8000/"
+    val baseUrl = "http://EarthLinkAPI.us-west-2.elasticbeanstalk.com:80/"
 
     fun getInstance(): Retrofit {
         // Create a logging interceptor
