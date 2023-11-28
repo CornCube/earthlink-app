@@ -1,7 +1,7 @@
 package com.earthlink.earthlinkapp.ui
 import android.util.Log
 import androidx.compose.runtime.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +39,7 @@ fun LoginScreen(navController: NavController, dataStore: DataStore<Preferences>)
     val userFlow = getUserFlow(dataStore)
     val user by userFlow.collectAsState(initial = "")
 
-    val colors = MaterialTheme.colors
+    val colors = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
@@ -48,16 +48,21 @@ fun LoginScreen(navController: NavController, dataStore: DataStore<Preferences>)
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // header text with Welcome Back!
+        Text(
+            text = "Welcome Back!",
+            style = MaterialTheme.typography.headlineSmall,
+            color = colors.onSurface
+        )
+        Spacer(
+            modifier = Modifier
+                .height(16.dp)
+        )
         OutlinedTextField(
             value = email,
             onValueChange = { email = filterValidCharacters(it) },
             label = { Text("Email", color = colors.onSurface) },
             textStyle = TextStyle(color = colors.onSurface),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = colors.onSurface,
-                focusedBorderColor = colors.primary,
-                unfocusedBorderColor = colors.onSurface.copy(alpha = ContentAlpha.medium)
-            )
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
@@ -77,6 +82,7 @@ fun LoginScreen(navController: NavController, dataStore: DataStore<Preferences>)
             Text(text = errorMessage, color = Color.Red)
         }
 
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = {
             loading = true
@@ -113,12 +119,19 @@ fun LoginScreen(navController: NavController, dataStore: DataStore<Preferences>)
                     }
                 }
             }
-        }, enabled = isLoginEnabled) {
+        }, enabled = isLoginEnabled,
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Login")
         }
-        Button(onClick = {
-            navController.navigate("signup")
-        }){
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = { navController.navigate("signup") },
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier.fillMaxWidth()
+        )
+        {
             Text("Sign Up")
         }
     }

@@ -1,7 +1,7 @@
 package com.earthlink.earthlinkapp.ui
 
 import androidx.compose.runtime.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +33,15 @@ fun SignUpScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // text field explaining what to do
+        Text(
+            text = "Sign up for EarthLink!",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // TextField components for email, password, and confirmPassword
         OutlinedTextField(
             value = email,
@@ -53,7 +62,8 @@ fun SignUpScreen(navController: NavController) {
             label = { Text("Confirm Password") },
             visualTransformation = PasswordVisualTransformation()
         )
-        Spacer(modifier = Modifier.height(16.dp))
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         if (loading) {
             CircularProgressIndicator()
@@ -87,10 +97,19 @@ fun SignUpScreen(navController: NavController) {
                     }
                 }
             }
-        }, enabled = isSignUpEnabled) {
+        }, enabled = isSignUpEnabled,
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier.fillMaxWidth()
+        )
+        {
             Text("Sign Up")
         }
-        Button(onClick = { navController.navigate("login") }) {
+        Button(
+            onClick = { navController.navigate("login") },
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier.fillMaxWidth()
+        )
+        {
             Text("Back to Login")
         }
     }

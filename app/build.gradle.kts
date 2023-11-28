@@ -12,8 +12,8 @@ android {
         applicationId = "com.earthlink.earthlinkapp"
         minSdk = 24
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "0.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
