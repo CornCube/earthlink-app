@@ -82,7 +82,7 @@ fun LoginScreen(navController: NavController, dataStore: DataStore<Preferences>)
             Text(text = errorMessage, color = Color.Red)
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
             loading = true

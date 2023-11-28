@@ -33,7 +33,6 @@ fun SignUpScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // text field explaining what to do
         Text(
             text = "Sign up for EarthLink!",
             style = MaterialTheme.typography.headlineSmall,
@@ -63,7 +62,7 @@ fun SignUpScreen(navController: NavController) {
             visualTransformation = PasswordVisualTransformation()
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (loading) {
             CircularProgressIndicator()
@@ -81,12 +80,12 @@ fun SignUpScreen(navController: NavController) {
             loading = true
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = signUp(SignUpData( email, password))
+                    val response = signUp(SignUpData(email, password))
                     withContext(Dispatchers.Main) {
                         if (response != null) {
                             navController.navigate("login")
                         } else {
-                            errorMessage = "Sign up failed: ${response}"
+                            errorMessage = "Sign up failed: account already exists"
                         }
                         loading = false
                     }
