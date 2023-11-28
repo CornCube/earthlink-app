@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.earthlink"
+    namespace = "com.earthlink.earthlinkapp"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.earthlink"
+        applicationId = "com.earthlink.earthlinkapp"
         minSdk = 24
         targetSdk = 33
         versionCode = 1
