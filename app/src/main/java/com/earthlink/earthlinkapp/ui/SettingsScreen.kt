@@ -113,7 +113,7 @@ fun Notification(){
 //Composable component for the appearance portion of the settings
 @Composable
 fun Appearance(dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
-    SettingHeader(text = "Appearance")
+    SettingHeader(text = "Map Theme")
     ThemeSelector(dataStore, snackbarHostState)
     Spacer(Modifier.height(12.dp))
 

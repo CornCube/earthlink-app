@@ -32,20 +32,26 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState()
 
     var isAddPostVisible by remember { mutableStateOf(false) }
     var showPostSnackbar by remember { mutableStateOf(false) }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var circlePosition by remember { mutableStateOf(LatLng(0.0, 0.0)) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
 
-    // get user
+    var messages by remember { mutableStateOf<List<MessageListFormat>?>(null) }
+    var selectedMessages by remember { mutableStateOf<List<MessageListFormat>>(emptyList()) }
+
     val userFlow = getUserFlow(dataStore)
     val user by userFlow.collectAsState(initial = "")
 
@@ -62,7 +68,6 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             "Night" -> MapStyleOptions.loadRawResourceStyle(context, R.raw.nightmap)
             else -> mapStyle
         }
-//        snackbarHostState.showSnackbar("Logged in as $user")
     }
 
     var uiSettings by remember { mutableStateOf(MapUiSettings()) }
@@ -92,7 +97,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         minZoomPreference = 2f
     )
 
-    // Update map to user's current location when the composable enters the Composition
+    // update camera position when the lifecycle starts
     DisposableEffect(lifecycleOwner) {
         val listener = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
@@ -109,28 +114,36 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         }
     }
 
-    // State to hold messages
-    var messages by remember { mutableStateOf<List<MessageListFormat>?>(null) }
-
+    // obtain the current location every 10 seconds
+    var currentLocation = LatLng(0.0, 0.0)
     LaunchedEffect(Unit) {
         while(true) {
             try {
-                val currentLocation = cameraPositionState.position.target
-                messages = getMessagesRadius(currentLocation.latitude, currentLocation.longitude)
+                getCurrentLocation(context) { location ->
+                    currentLocation = location
+                    circlePosition = location
+                }
             } catch (e: Exception) {
                 // Handle exceptions
             }
-            delay(5000)
+            delay(10000)
         }
     }
-    if(messages != null){
-        Log.d("msg", messages.toString())
-    }
-    else{
-        Log.d("msg", "not working")
+
+    // every 10 seconds, use the current location to get messages within a 10m radius
+    LaunchedEffect(Unit) {
+        while(true) {
+            try {
+                messages = getMessagesRadius(currentLocation.latitude, currentLocation.longitude)
+                // TODO: filter overlapping messages here with a new format (need to rethink the data model)
+            } catch (e: Exception) {
+                // Handle exceptions
+            }
+            delay(10000)
+        }
     }
 
-
+    // TODO: overlapping messages
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
@@ -138,12 +151,36 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         properties = mapProperties,
     ) {
         messages?.forEach { message ->
-            Marker(
-                state = MarkerState(position = LatLng(message.latitude, message.longitude)),
-                snippet = message.message_content,
-                title = message.user_uid,
+//            Marker(
+//                state = MarkerState(position = LatLng(message.latitude, message.longitude)),
+//                snippet = message.message_content,
+//                title = message.user_uid,
+//            )
+            Circle(
+                center = LatLng(message.latitude, message.longitude),
+                radius = 10.0, // radius in meters
+                fillColor = Color.Red.copy(alpha = 0.5f),
+                strokePattern = listOf(Dash(10f), Gap(10f)),
+                strokeColor = Color.Black,
+                strokeWidth = 2f,
+                zIndex = 100f,
+                clickable = true,
+                onClick = {
+                    Log.d("Circle", "Clicked")
+                    showBottomSheet = true
+                    selectedMessages = listOf(message) // TODO
+                }
             )
         }
+
+        Circle(
+            center = circlePosition,
+            radius = 80.0, // radius in meters
+            fillColor = Color.Blue.copy(alpha = 0.05f),
+            strokeColor = Color.Black,
+            strokePattern = listOf(Dash(10f), Gap(10f)),
+            strokeWidth = 2f
+        )
     }
 
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
@@ -153,12 +190,41 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         AddPost(onClick = { isAddPostVisible = true }, dataStore)
     }
 
+    if (showBottomSheet && selectedMessages.isNotEmpty()) {
+        ModalBottomSheet(
+            sheetState = sheetState,
+            onDismissRequest = {
+                showBottomSheet = false
+                selectedMessages = emptyList()
+            }
+        ) {
+            // Sheet content
+            Column {
+                selectedMessages.forEach { message ->
+                    Text("Message: ${message.message_content}")
+                    // TODO: other UI elements (card) to display message details
+                }
+            }
+
+            Button(onClick = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                }.invokeOnCompletion {
+                    if (!sheetState.isVisible) {
+                        showBottomSheet = false
+                    }
+                }
+            }) {
+                Text("Hide Bottom Sheet")
+            }
+        }
+    }
+
     if (isAddPostVisible) {
         AddPostModal(
             onDismissRequest = { isAddPostVisible = false },
             onPostSubmit = { message ->
                 coroutineScope.launch {
-                    val currentLocation = cameraPositionState.position.target
                     val post = Message(
                         message_content = message,
                         latitude = currentLocation.latitude,
