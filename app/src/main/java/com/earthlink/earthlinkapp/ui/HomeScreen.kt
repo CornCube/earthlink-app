@@ -2,8 +2,12 @@ package com.earthlink.earthlinkapp.ui
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.runtime.*
@@ -21,6 +25,7 @@ import com.earthlink.earthlinkapp.R
 import com.earthlink.earthlinkapp.model.Message
 import com.earthlink.earthlinkapp.model.MessageListFormat
 import com.earthlink.earthlinkapp.network.*
+import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getCurrentLocation
 import com.earthlink.earthlinkapp.utils.getFilterFlow
 import com.earthlink.earthlinkapp.utils.getThemeFlow
@@ -42,6 +47,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
     var isAddPostVisible by remember { mutableStateOf(false) }
     var showPostSnackbar by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
+    var currentLocation by remember { mutableStateOf(LatLng(0.0, 0.0)) }
     var circlePosition by remember { mutableStateOf(LatLng(0.0, 0.0)) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -49,7 +55,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
     }
 
-    var messages by remember { mutableStateOf<List<MessageListFormat>?>(null) }
+    var messages by remember { mutableStateOf<List<List<MessageListFormat>>?>(null) }
     var selectedMessages by remember { mutableStateOf<List<MessageListFormat>>(emptyList()) }
 
     val userFlow = getUserFlow(dataStore)
@@ -115,7 +121,6 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
     }
 
     // obtain the current location every 10 seconds
-    var currentLocation = LatLng(0.0, 0.0)
     LaunchedEffect(Unit) {
         while(true) {
             try {
@@ -135,7 +140,6 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         while(true) {
             try {
                 messages = getMessagesRadius(currentLocation.latitude, currentLocation.longitude)
-                // TODO: filter overlapping messages here with a new format (need to rethink the data model)
             } catch (e: Exception) {
                 // Handle exceptions
             }
@@ -143,21 +147,16 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         }
     }
 
-    // TODO: overlapping messages
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
         properties = mapProperties,
     ) {
-        messages?.forEach { message ->
-//            Marker(
-//                state = MarkerState(position = LatLng(message.latitude, message.longitude)),
-//                snippet = message.message_content,
-//                title = message.user_uid,
-//            )
+        var it = 0
+        messages?.forEach { messageList ->
             Circle(
-                center = LatLng(message.latitude, message.longitude),
+                center = LatLng(messageList[it].latitude, messageList[it].longitude),
                 radius = 10.0, // radius in meters
                 fillColor = Color.Red.copy(alpha = 0.5f),
                 strokePattern = listOf(Dash(10f), Gap(10f)),
@@ -166,13 +165,14 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
                 zIndex = 100f,
                 clickable = true,
                 onClick = {
-                    Log.d("Circle", "Clicked")
                     showBottomSheet = true
-                    selectedMessages = listOf(message) // TODO
+                    selectedMessages = messageList
                 }
             )
+            it++
         }
 
+        // range circle
         Circle(
             center = circlePosition,
             radius = 80.0, // radius in meters
@@ -199,23 +199,17 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             }
         ) {
             // Sheet content
-            Column {
-                selectedMessages.forEach { message ->
-                    Text("Message: ${message.message_content}")
-                    // TODO: other UI elements (card) to display message details
-                }
-            }
+            Column (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+                    .verticalScroll(rememberScrollState(), flingBehavior = null),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-            Button(onClick = {
-                coroutineScope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion {
-                    if (!sheetState.isVisible) {
-                        showBottomSheet = false
-                    }
+                selectedMessages.forEach { message ->
+                    SheetPostCard(message = message)
                 }
-            }) {
-                Text("Hide Bottom Sheet")
             }
         }
     }
@@ -229,8 +223,10 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
                         message_content = message,
                         latitude = currentLocation.latitude,
                         longitude = currentLocation.longitude,
-                        timeStamp = System.currentTimeMillis(),
-                        user_uid = user
+                        timestamp = System.currentTimeMillis(),
+                        user_uid = user,
+                        likes = 0,
+                        dislikes = 0
                     )
                     showPostSnackbar = true
                     try {
@@ -315,7 +311,7 @@ fun AddPost(onClick: () -> Unit, dataStore: DataStore<Preferences>) {
 
     if (showAddPostModal) {
         AddPostModal(onDismissRequest = { showAddPostModal = false }, onPostSubmit = { message ->
-            println("Posted message: $message")
+            Log.d("AddPost", "Posted message: $message")
             showAddPostModal = false
         }, dataStore = dataStore)
     }
@@ -332,7 +328,7 @@ fun AddPostModal(onDismissRequest: () -> Unit, onPostSubmit: (String) -> Unit, d
                 onDismissRequest()
             },
             onPostClick = { message ->
-                println("Posted message: $message")
+                Log.d("AddPostModal", "Posted message: $message")
                 onPostSubmit(message)
                 showDialog = false
             },
@@ -384,5 +380,106 @@ fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) ->
                 }
             }
         }
+    }
+}
+
+// TODO: Make all these buttons actually do stuff
+@Composable
+fun InteractRow(message: MessageListFormat) {
+    // variable 1 or -1. if 1, then it is liked. if -1, then it is disliked. only one can be true at a time, so only
+    // one icon can be filled at a time
+    var reaction by remember { mutableIntStateOf(0) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row {
+            Icon(
+                painter = if (reaction == 1) painterResource(R.drawable.thumb_up_filled_24px) else painterResource(R.drawable.thumb_up_24px),
+                contentDescription = "Likes",
+                tint = Color(0xff8fa8ea),
+                modifier = Modifier.clickable { reaction = if (reaction == 1) 0 else 1 }
+            )
+            Text(
+                modifier = Modifier.padding(start = 5.dp, top = 3.dp),
+                text = message.likes.toString(),
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+        Row {
+            Icon(
+                painter = if (reaction == -1) painterResource(R.drawable.thumb_down_filled_24px) else painterResource(R.drawable.thumb_down_24px),
+                contentDescription = "Dislikes",
+                tint = Color(0xffe57373),
+                modifier = Modifier.padding(start = 10.dp).clickable { reaction = if (reaction == -1) 0 else -1 },
+            )
+            Text(
+                modifier = Modifier.padding(start = 5.dp, top = 3.dp),
+                text = message.dislikes.toString(),
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+        Row (
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        )
+        {
+            Icon(
+                modifier = Modifier.padding(start = 10.dp),
+                painter = painterResource(R.drawable.content_paste_24px),
+                contentDescription = "Copy",
+            )
+        }
+    }
+}
+
+@Composable
+fun SheetPostCard(message:MessageListFormat) {
+    val nameClicked = remember { mutableStateOf(false) }
+    val author = message.user_uid
+    val timestamp = formatTimestamp(message.timestamp)
+    val content = message.message_content
+
+    Box(
+        modifier = Modifier
+            .padding(vertical = 5.dp, horizontal = 10.dp),
+    ) {
+        Divider(modifier = Modifier.fillMaxWidth())
+        Column(
+            modifier = Modifier
+                .padding(5.dp, top = 30.dp, bottom = 20.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Anonymous",
+                    color = Color(0xff8fa8ea),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.clickable { nameClicked.value = !nameClicked.value }
+                )
+                Text(
+                    modifier = Modifier.padding(start = 5.dp),
+                    text = timestamp,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+            if (nameClicked.value) {
+                Text(
+                    text = "ID.$author",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            Spacer(modifier = Modifier.height(15.dp))
+            Text(
+                text = content,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            InteractRow(message)
+        }
+        Divider(modifier = Modifier.fillMaxWidth())
     }
 }

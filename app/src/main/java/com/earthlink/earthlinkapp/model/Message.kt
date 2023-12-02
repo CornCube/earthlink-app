@@ -4,8 +4,10 @@ data class Message(
     val longitude: Double,
     val latitude: Double,
     val message_content: String,
-    val timeStamp: Long,
-    val user_uid: String
+    val timestamp: Long,
+    val user_uid: String,
+    val likes: Int,
+    val dislikes: Int
 )
 
 data class MessageListFormat(
@@ -13,8 +15,10 @@ data class MessageListFormat(
     val longitude: Double,
     val latitude: Double,
     val message_content: String,
-    val timeStamp: Long,
-    val user_uid: String
+    val timestamp: String,
+    val user_uid: String,
+    val likes: Int,
+    val dislikes: Int
 )
 
 // posting a message response

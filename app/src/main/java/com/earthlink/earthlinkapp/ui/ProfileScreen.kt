@@ -31,6 +31,7 @@ import com.earthlink.earthlinkapp.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
 import com.earthlink.earthlinkapp.network.getMessagesFromUser
 import com.earthlink.earthlinkapp.network.deleteMessage
+import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getUserFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -226,7 +227,6 @@ fun Posts(
         modifier = Modifier
             .padding(start = contentPadding, end = contentPadding)
             .verticalScroll(rememberScrollState(), flingBehavior = null),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         posts?.forEach { post ->
             PostCard(post, snackbarHostState, onRefreshChange)
@@ -234,6 +234,7 @@ fun Posts(
     }
 }
 
+// TODO: fix this
 @Composable
 fun DeleteButton(
     messageId: String,
@@ -278,35 +279,94 @@ fun DeleteButton(
 }
 
 @Composable
+fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostState: SnackbarHostState, onRefreshChange: (Boolean) -> Unit) {
+    // variable 1 or -1. if 1, then it is liked. if -1, then it is disliked. only one can be true at a time, so only
+    // one icon can be filled at a time
+    var reaction by remember { mutableIntStateOf(0) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row {
+            Icon(
+                painter = if (reaction == 1) painterResource(R.drawable.thumb_up_filled_24px) else painterResource(R.drawable.thumb_up_24px),
+                contentDescription = "Likes",
+                tint = Color(0xff8fa8ea),
+                modifier = Modifier.clickable { reaction = if (reaction == 1) 0 else 1 }
+            )
+            Text(
+                modifier = Modifier.padding(start = 5.dp, top = 3.dp),
+                text = post.value.likes.toString(),
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+        Row {
+            Icon(
+                painter = if (reaction == -1) painterResource(R.drawable.thumb_down_filled_24px) else painterResource(R.drawable.thumb_down_24px),
+                contentDescription = "Dislikes",
+                tint = Color(0xffe57373),
+                modifier = Modifier.padding(start = 10.dp).clickable { reaction = if (reaction == -1) 0 else -1 },
+            )
+            Text(
+                modifier = Modifier.padding(start = 5.dp, top = 3.dp),
+                text = post.value.dislikes.toString(),
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+//        DeleteButton(post.key, snackbarHostState, onRefreshChange)
+    }
+}
+
+@Composable
 fun PostCard(
     post: Map.Entry<String, MessageListFormat>,
     snackbarHostState: SnackbarHostState,
     onRefreshChange: (Boolean) -> Unit,
 ) {
-    Card(
+    val nameClicked = remember { mutableStateOf(false) }
+    val author = post.value.user_uid
+    val timestamp = formatTimestamp(post.value.timestamp)
+    val content = post.value.message_content
+
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 1.dp)
+            .padding(vertical = 5.dp, horizontal = 10.dp),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .padding(18.dp)
-                    .align(Alignment.TopStart)
+        Divider(modifier = Modifier.fillMaxWidth())
+        Column(
+            modifier = Modifier
+                .padding(5.dp, top = 30.dp, bottom = 20.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = post.value.message_content, style = TextStyle(fontSize = 16.sp))
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = post.value.timeStamp.toString(), style = TextStyle(fontSize = 14.sp))
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text = "By ${post.value.user_uid}", style = TextStyle(fontSize = 12.sp))
+                Text(
+                    text = "Anonymous",
+                    color = Color(0xff8fa8ea),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.clickable { nameClicked.value = !nameClicked.value }
+                )
+                Text(
+                    modifier = Modifier.padding(start = 5.dp),
+                    text = timestamp,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopEnd)
-            ) {
-                DeleteButton(post.key, snackbarHostState, onRefreshChange)
+            if (nameClicked.value) {
+                Text(
+                    text = "ID.$author",
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
+            Spacer(modifier = Modifier.height(15.dp))
+            Text(
+                text = content,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            InteractRowProfile(post, snackbarHostState, onRefreshChange)
         }
     }
 }

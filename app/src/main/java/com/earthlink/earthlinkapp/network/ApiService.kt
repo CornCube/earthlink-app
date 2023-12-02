@@ -19,7 +19,7 @@ import retrofit2.http.Path
 
 interface ApiService {
     @GET("/getMessagesByRadius/{latitude}/{longitude}")
-    fun getMessagesRadius(@Path("latitude") latitude: Double, @Path("longitude") longitude: Double): Call<List<MessageListFormat>>
+    fun getMessagesRadius(@Path("latitude") latitude: Double, @Path("longitude") longitude: Double): Call<List<List<MessageListFormat>>>
 
     @GET("/getMessagesFromUser/{user_uid}")
     fun getMessagesFromUser(@Path("user_uid") user_uid: String): Call<Map<String, MessageListFormat>>

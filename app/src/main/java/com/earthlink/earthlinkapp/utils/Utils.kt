@@ -50,7 +50,6 @@ fun calculateSurfaceArea(latlngList: List<LatLng>): Double {
 
 fun formattedValue(value: Double) = String.format("%.2f",value)
 
-
 @SuppressLint("MissingPermission")
 fun getCurrentLocation(context: Context, onLocationFetched: (location: LatLng) -> Unit) {
     var loc: LatLng
@@ -71,20 +70,25 @@ fun getCurrentLocation(context: Context, onLocationFetched: (location: LatLng) -
         }
 }
 
-fun bitmapDescriptor(
-    context: Context,
-    resId: Int
-): BitmapDescriptor? {
+// function to convert timestamp to datetime, looks like "2023-11-14T10:29:29.298199". timestamp
+// should be converted into the following "11/14/2023 10:29 AM". It should use 12 hour time format.
+fun formatTimestamp(timestamp: String): String {
+    val date = timestamp.split("T")[0]
+    val time = timestamp.split("T")[1].split(".")[0]
+    val year = date.split("-")[0]
+    val month = date.split("-")[1]
+    val day = date.split("-")[2]
+    val hour = time.split(":")[0]
+    val minute = time.split(":")[1]
+    val second = time.split(":")[2]
 
-    val drawable = ContextCompat.getDrawable(context, resId) ?: return null
-    drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
-    val bm = Bitmap.createBitmap(
-        drawable.intrinsicWidth,
-        drawable.intrinsicHeight,
-        Bitmap.Config.ARGB_8888
-    )
+    val hourInt = hour.toInt()
+    val minuteInt = minute.toInt()
 
-    val canvas = android.graphics.Canvas(bm)
-    drawable.draw(canvas)
-    return BitmapDescriptorFactory.fromBitmap(bm)
+    val ampm = if (hourInt < 12) "AM" else "PM"
+    val hour12 = if (hourInt > 12) hourInt - 12 else hourInt
+    val hourString = if (hour12 < 10) "0$hour12" else hour12.toString()
+    val minuteString = if (minuteInt < 10) "0$minuteInt" else minuteInt.toString()
+
+    return "$month/$day/$year $hourString:$minuteString $ampm"
 }
