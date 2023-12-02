@@ -50,6 +50,9 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
     var currentLocation by remember { mutableStateOf(LatLng(0.0, 0.0)) }
     var circlePosition by remember { mutableStateOf(LatLng(0.0, 0.0)) }
 
+    var maxNumber by remember { mutableStateOf(25) }
+    var sortType by remember { mutableStateOf(0) }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f)
@@ -139,7 +142,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
     LaunchedEffect(Unit) {
         while(true) {
             try {
-                messages = getMessagesRadius(currentLocation.latitude, currentLocation.longitude)
+                messages = getMessagesRadius(currentLocation.latitude, currentLocation.longitude, maxNumber, sortType)
             } catch (e: Exception) {
                 // Handle exceptions
             }

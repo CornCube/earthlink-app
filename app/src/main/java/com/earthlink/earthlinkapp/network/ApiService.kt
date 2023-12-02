@@ -18,8 +18,8 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface ApiService {
-    @GET("/getMessagesByRadius/{latitude}/{longitude}")
-    fun getMessagesRadius(@Path("latitude") latitude: Double, @Path("longitude") longitude: Double): Call<List<List<MessageListFormat>>>
+    @GET("/getMessagesByRadius/{latitude}/{longitude}/{max_number}/{sort_type}")
+    fun getMessagesRadius(@Path("latitude") latitude: Double, @Path("longitude") longitude: Double, @Path("max_number") max_number: Int, @Path("sort_type") sort_type: Int,): Call<List<List<MessageListFormat>>>
 
     @GET("/getMessagesFromUser/{user_uid}")
     fun getMessagesFromUser(@Path("user_uid") user_uid: String): Call<Map<String, MessageListFormat>>
@@ -39,5 +39,6 @@ interface ApiService {
     @POST("/ping")
     suspend fun validateToken(@Header("authorization") token: String): Response<ValidateResponse>
 
-
+//    @POST("/changeReactions")
+//    suspend fun changeReactions(@Body message: Message): Response<>
 }

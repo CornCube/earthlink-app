@@ -55,12 +55,12 @@ suspend fun getMessagesFromUser(user_uid: String): Map<String, MessageListFormat
     }
 }
 
-suspend fun getMessagesRadius(latitude: Double, longitude: Double): List<List<MessageListFormat>>? {
+suspend fun getMessagesRadius(latitude: Double, longitude: Double, max_number: Int, sort_type: Int): List<List<MessageListFormat>>? {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
 
     return try {
-        val response = messagesService.getMessagesRadius(latitude, longitude).awaitResponse()
+        val response = messagesService.getMessagesRadius(latitude, longitude, max_number, sort_type).awaitResponse()
         if (response.isSuccessful) {
             response.body()
         } else {
