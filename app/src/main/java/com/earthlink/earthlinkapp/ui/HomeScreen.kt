@@ -1,7 +1,10 @@
 package com.earthlink.earthlinkapp.ui
 
+import android.annotation.SuppressLint
+import android.content.ClipData
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +17,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.datastore.core.DataStore
@@ -397,6 +401,8 @@ fun InteractRow(message: MessageListFormat) {
     val likes = remember { mutableIntStateOf(message.likes) }
     val dislikes = remember { mutableIntStateOf(message.dislikes) }
 
+    val clipboardManager = LocalClipboardManager.current
+
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -475,7 +481,12 @@ fun InteractRow(message: MessageListFormat) {
         )
         {
             Icon(
-                modifier = Modifier.padding(start = 10.dp),
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .clickable {
+                        val copy = AnnotatedString(message.message_content)
+                        clipboardManager.setText(copy)
+                    },
                 painter = painterResource(R.drawable.content_paste_24px),
                 contentDescription = "Copy",
             )
