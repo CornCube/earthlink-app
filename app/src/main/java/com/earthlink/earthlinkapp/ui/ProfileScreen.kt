@@ -211,24 +211,23 @@ val achievements = listOf(
     Achievement("Post 100 messages", "20 points"),
     Achievement("Post 1000 messages", "30 points")
 )
-
-
 @Composable
 fun Posts(
     posts: Map<String, MessageListFormat>?,
     snackbarHostState: SnackbarHostState,
     onRefreshChange: (Boolean) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var searchText by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     val options = listOf("Likes", "Latest")
     var selectedIndex by remember { mutableStateOf(0) }
-    var curOption: String by remember{mutableStateOf(options[0])}
+    var curOption by remember { mutableStateOf(options[0]) }
 
     Column(
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-    ){
+    ) {
         Text(
             "Posts",
             fontWeight = FontWeight.Bold,
@@ -236,39 +235,51 @@ fun Posts(
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-
         Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
                 value = searchText,
                 onValueChange = { searchText = it },
                 label = { Text("Search messages") },
-                modifier = Modifier.weight(1f) // Use weight to fill the available space
+                modifier = Modifier.weight(1f),
             )
 
+            // Wrap the button and the dropdown menu in a Box
+            Box {
+                TextButton(onClick = { expanded = !expanded }) { // Toggle the expanded state
+                    Text(text = "Sort by")
+                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Dropdown Menu")
+                }
 
-            Text(text = "Sort by", modifier = Modifier.weight(0.2f))
-            IconButton(onClick = { expanded = !expanded }) {
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Dropdown Menu")
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd) // Align the dropdown to the end of the TextButton
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    options.forEachIndexed { index, option ->
+                        DropdownMenuItem(text = { Text(text = option)},
+                            onClick = {
+                                selectedIndex = index
+                                curOption = option
+                                expanded = false
+                                // Show snackbar on changing sorting preference
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Sorting by $option",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            })
+                    }
+                }
             }
-
-//            DropdownMenu(
-//                expanded = expanded,
-//                onDismissRequest = { expanded = false }
-//            ) {
-//                options.forEach{ option ->
-//                    DropdownMenuItem(onClick = {
-//                        selectedIndex = option
-//                        expanded = false
-//                    }) {
-//                        Text(text = option)
-//                    }
-//                }
-//            }
-
-
         }
+
+
 
     }
 
@@ -282,6 +293,9 @@ fun Posts(
             PostCard(post, snackbarHostState, onRefreshChange)
         }
     }
+    SnackbarHost(
+        hostState = snackbarHostState,
+    )
 }
 // TODO: fix this
 @Composable
@@ -354,7 +368,9 @@ fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostS
                 painter = if (reaction == -1) painterResource(R.drawable.thumb_down_filled_24px) else painterResource(R.drawable.thumb_down_24px),
                 contentDescription = "Dislikes",
                 tint = Color(0xffe57373),
-                modifier = Modifier.padding(start = 10.dp).clickable { reaction = if (reaction == -1) 0 else -1 },
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .clickable { reaction = if (reaction == -1) 0 else -1 },
             )
             Text(
                 modifier = Modifier.padding(start = 5.dp, top = 3.dp),
