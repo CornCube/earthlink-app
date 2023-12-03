@@ -11,6 +11,8 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -210,19 +212,67 @@ val achievements = listOf(
     Achievement("Post 1000 messages", "30 points")
 )
 
+
 @Composable
 fun Posts(
     posts: Map<String, MessageListFormat>?,
     snackbarHostState: SnackbarHostState,
     onRefreshChange: (Boolean) -> Unit
 ) {
-    Row(
+    var searchText by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    val options = listOf("Likes", "Latest")
+    var selectedIndex by remember { mutableStateOf(0) }
+    var curOption: String by remember{mutableStateOf(options[0])}
+
+    Column(
         modifier = Modifier
-            .padding(start = 12.dp)
-            .padding(16.dp),
-    ) {
-        Text("Posts", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+    ){
+        Text(
+            "Posts",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                label = { Text("Search messages") },
+                modifier = Modifier.weight(1f) // Use weight to fill the available space
+            )
+
+
+            Text(text = "Sort by", modifier = Modifier.weight(0.2f))
+            IconButton(onClick = { expanded = !expanded }) {
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Dropdown Menu")
+            }
+
+//            DropdownMenu(
+//                expanded = expanded,
+//                onDismissRequest = { expanded = false }
+//            ) {
+//                options.forEach{ option ->
+//                    DropdownMenuItem(onClick = {
+//                        selectedIndex = option
+//                        expanded = false
+//                    }) {
+//                        Text(text = option)
+//                    }
+//                }
+//            }
+
+
+        }
+
     }
+
+
     Column(
         modifier = Modifier
             .padding(start = contentPadding, end = contentPadding)
@@ -233,7 +283,6 @@ fun Posts(
         }
     }
 }
-
 // TODO: fix this
 @Composable
 fun DeleteButton(
