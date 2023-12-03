@@ -29,6 +29,7 @@ import com.earthlink.earthlinkapp.model.Message
 import com.earthlink.earthlinkapp.model.MessageListFormat
 import com.earthlink.earthlinkapp.model.ReactionData
 import com.earthlink.earthlinkapp.network.*
+import com.earthlink.earthlinkapp.utils.ProfanityCheck
 import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getCurrentLocation
 import com.earthlink.earthlinkapp.utils.getFilterFlow
@@ -217,7 +218,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             ) {
 
                 selectedMessages.forEach { message ->
-                    SheetPostCard(message = message)
+                    SheetPostCard(message = message, dataStore = dataStore)
                 }
             }
         }
@@ -257,17 +258,6 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
             snackbarHostState.showSnackbar("Message posted")
             showPostSnackbar = false
         }
-    }
-}
-
-// Helper function to replace profanities in the message
-fun ProfanityCheck(message: String, filterEnabled: Boolean): String {
-    return if (!filterEnabled) {
-        message.replace("fuck", "****", ignoreCase = true)
-        message.replace("shit", "****", ignoreCase = true)
-        message.replace("crap", "****", ignoreCase = true)
-    } else {
-        message
     }
 }
 
@@ -350,11 +340,6 @@ fun AddPostModal(onDismissRequest: () -> Unit, onPostSubmit: (String) -> Unit, d
 fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) -> Unit, dataStore: DataStore<Preferences>) {
     var textState by remember { mutableStateOf("") }
 
-    val filterFlow: Flow<Boolean> = getFilterFlow(dataStore)
-    val filterEnabled by filterFlow.collectAsState(initial = false)
-
-    Log.d("filter", filterEnabled.toString())
-
     Dialog(onDismissRequest = onDismissRequest) {
         Card(
             modifier = Modifier.padding(16.dp),
@@ -380,8 +365,7 @@ fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) ->
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = {
-                        val filteredMessage = ProfanityCheck(textState, filterEnabled)
-                        onPostClick(filteredMessage)
+                        onPostClick(textState)
                         onDismissRequest()
                     }) {
                         Text("Post")
@@ -392,7 +376,6 @@ fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) ->
     }
 }
 
-// TODO: Make all these buttons actually do stuff
 @Composable
 fun InteractRow(message: MessageListFormat) {
     // variable 1 or -1. if 1, then it is liked. if -1, then it is disliked. only one can be true at a time, so only
@@ -495,11 +478,14 @@ fun InteractRow(message: MessageListFormat) {
 }
 
 @Composable
-fun SheetPostCard(message:MessageListFormat) {
+fun SheetPostCard(message:MessageListFormat, dataStore: DataStore<Preferences>) {
     val nameClicked = remember { mutableStateOf(false) }
+    val filterFlow: Flow<Float> = getFilterFlow(dataStore)
+    val filterEnabled by filterFlow.collectAsState(initial = 2f)
+
     val author = message.user_uid
     val timestamp = formatTimestamp(message.timestamp)
-    val content = message.message_content
+    val content = ProfanityCheck(message.message_content, filterEnabled)
 
     Box(
         modifier = Modifier

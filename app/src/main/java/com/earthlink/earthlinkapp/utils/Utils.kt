@@ -123,3 +123,21 @@ fun updateDislikes(newValue: Int, likes: MutableState<Int>, dislikes: MutableSta
         }
     }
 }
+
+// Helper function to replace profanities in the message
+fun ProfanityCheck(message: String, filterEnabled: Float): String {
+    var updatedMessage = message
+
+    if (filterEnabled == 1f) {
+        updatedMessage = updatedMessage.replace("fuck", "fu*k", ignoreCase = true)
+            .replace("shit", "sh*t", ignoreCase = true)
+            .replace("crap", "cr*p", ignoreCase = true)
+    }
+    else if (filterEnabled == 2f) {
+        updatedMessage = updatedMessage.replace("fuck", "****", ignoreCase = true)
+            .replace("shit", "****", ignoreCase = true)
+            .replace("crap", "****", ignoreCase = true)
+    }
+
+    return updatedMessage
+}

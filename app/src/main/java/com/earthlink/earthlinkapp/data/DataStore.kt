@@ -5,7 +5,8 @@ import androidx.datastore.preferences.core.*
 object PreferencesKeys {
     val USER_NOTIFICATION_KEY = booleanPreferencesKey("user_notification") // notifications on/off
     val USER_THEME_KEY = stringPreferencesKey("user_theme") // ui theme
-    val USER_FILTER_KEY = booleanPreferencesKey("user_filter") // profanity filter
+    val USER_FILTER_KEY = floatPreferencesKey("user_filter") // profanity filter
+    val USER_RENDERIMAGE_KEY = booleanPreferencesKey("user_renderimage") // render images on/off
     val USER_NAME_KEY = stringPreferencesKey("user_name") // username
     val USER_PASSWORD_KEY = stringPreferencesKey("user_password") // password
     val USER_ID_KEY = stringPreferencesKey("user_id") // user id

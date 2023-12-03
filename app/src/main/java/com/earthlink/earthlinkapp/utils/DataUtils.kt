@@ -15,13 +15,22 @@ fun getThemeFlow(dataStore: DataStore<Preferences>): Flow<String> {
     return themeFlow
 }
 
-fun getFilterFlow(dataStore: DataStore<Preferences>): Flow<Boolean> {
-    val filterFlow: Flow<Boolean> = dataStore.data
+fun getFilterFlow(dataStore: DataStore<Preferences>): Flow<Float> {
+    val filterFlow: Flow<Float> = dataStore.data
         .map { preferences ->
-            preferences[PreferencesKeys.USER_FILTER_KEY] ?: false
+            preferences[PreferencesKeys.USER_FILTER_KEY] ?: 0f
         }
 
     return filterFlow
+}
+
+fun getRenderFlow(dataStore: DataStore<Preferences>): Flow<Boolean> {
+    val renderFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_RENDERIMAGE_KEY] ?: false
+        }
+
+    return renderFlow
 }
 
 fun getProfilePictureFlow(dataStore: DataStore<Preferences>): Flow<String> {

@@ -42,7 +42,6 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>,
             Spacer(modifier = Modifier.height(verticalSpacing))
             Appearance(dataStore, snackbarHostState)
             FilterSettings(dataStore, snackbarHostState)
-            Notification()
             AccountSettings()
             HelpSupport()
             About()
@@ -56,21 +55,16 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>,
 fun FilterSettings(dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     SettingHeader(text = "Message Filter")
 
-    val currentFilterFlow: Flow<Boolean> = getFilterFlow(dataStore)
-    val currentFilter by currentFilterFlow.collectAsState(initial = false)
+    val currentFilterFlow: Flow<Float> = getFilterFlow(dataStore)
+    val currentFilter by currentFilterFlow.collectAsState(initial = 0f)
 
     // Remember a mutable state initialized with the current filter setting
-    var allowProfanity by remember { mutableStateOf(currentFilter) }
+    var allowProfanity by remember { mutableFloatStateOf(currentFilter) }
 
     // Update the DataStore when the allowProfanity state changes
     LaunchedEffect(allowProfanity) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.USER_FILTER_KEY] = allowProfanity
-        }
-        if (allowProfanity) {
-            snackbarHostState.showSnackbar("Profanity filter off")
-        } else {
-            snackbarHostState.showSnackbar("Profanity filter on")
         }
     }
 
@@ -79,11 +73,26 @@ fun FilterSettings(dataStore: DataStore<Preferences>, snackbarHostState: Snackba
     }
 
     // Pass the mutable state and its setter to the HelperCheckBox
-    HelperCheckBox(
-        text = "Allow Profanity",
-        checked = allowProfanity,
-        onCheckedChange = { allowProfanity = it }
+//    HelperCheckBox(
+//        text = "Allow Profanity",
+//        checked = allowProfanity,
+//        onCheckedChange = { allowProfanity = it }
+//    )
+
+    val filterLabels = mapOf(0f to "No filter", 1f to "Partial filter", 2f to "Full filter")
+
+    Slider(
+        value = allowProfanity,
+        onValueChange = { allowProfanity = it },
+        colors = SliderDefaults.colors(
+            thumbColor = MaterialTheme.colorScheme.secondary,
+            activeTrackColor = MaterialTheme.colorScheme.secondary,
+            inactiveTrackColor = MaterialTheme.colorScheme.secondaryContainer,
+        ),
+        steps = 1,
+        valueRange = 0f..2f,
     )
+    Text(text = filterLabels[allowProfanity] ?: allowProfanity.toString())
 
     Spacer(Modifier.height(12.dp))
 }
@@ -95,19 +104,6 @@ fun AccountSettings(){
     HelperButton(text = "Change username/password")
 
     Spacer(Modifier.height(12.dp))
-}
-
-//Composable component for the notification portion of the settings
-@Composable
-fun Notification(){
-    SettingHeader(text = "Notifications")
-    
-    HelperCheckBox(text = "Mute Notifications", checked = false, onCheckedChange = { /*TODO*/ })
-    HelperCheckBox(text = "Notification setting 2", checked = false, onCheckedChange = { /*TODO*/ })
-    HelperCheckBox(text = "Notification setting 3", checked = false, onCheckedChange = { /*TODO*/ })
-
-    Spacer(Modifier.height(12.dp))
-
 }
 
 //Composable component for the appearance portion of the settings
