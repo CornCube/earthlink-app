@@ -5,6 +5,8 @@ import com.earthlink.earthlinkapp.model.LoginResponse
 import com.earthlink.earthlinkapp.model.Message
 import com.earthlink.earthlinkapp.model.MessageListFormat
 import com.earthlink.earthlinkapp.model.PostMessageResponse
+import com.earthlink.earthlinkapp.model.ReactionData
+import com.earthlink.earthlinkapp.model.ReactionResponse
 import com.earthlink.earthlinkapp.model.SignUpData
 import com.earthlink.earthlinkapp.model.SignUpResponse
 import com.earthlink.earthlinkapp.model.ValidateResponse
@@ -39,6 +41,6 @@ interface ApiService {
     @POST("/ping")
     suspend fun validateToken(@Header("authorization") token: String): Response<ValidateResponse>
 
-//    @POST("/changeReactions")
-//    suspend fun changeReactions(@Body message: Message): Response<>
+    @POST("/changeReactions")
+    suspend fun changeReactions(@Body reactionData: ReactionData): Response<ReactionResponse>
 }
