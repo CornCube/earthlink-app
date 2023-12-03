@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
 
                     val shouldShowBottomBar = navController.currentBackStackEntryAsState().value?.destination?.route in listOf(
                         Screen.Home.route,
-                        Screen.Friends.route,
+//                        Screen.Friends.route,
                         Screen.Profile.route,
                         Screen.Settings.route
                     )
@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
                             // Your existing composable destinations
                             composable(Screen.Home.route) { Main(navigation = navController, dataStore, snackbarHostState) }
                             composable(Screen.Profile.route) { ProfileScreen(navigation = navController, dataStore, snackbarHostState) }
-                            composable(Screen.Friends.route) { FriendScreen(navigation = navController) }
+//                            composable(Screen.Friends.route) { FriendScreen(navigation = navController) }
                             composable(Screen.Settings.route) { SettingsScreen(navigation = navController, dataStore, snackbarHostState) }
                             composable("EditProfileScreen") { EditProfileScreen(navigation = navController, dataStore) }
                             // Add other composable destinations as needed here

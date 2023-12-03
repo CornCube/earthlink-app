@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.location.Location
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.core.app.ActivityCompat
@@ -91,4 +92,34 @@ fun formatTimestamp(timestamp: String): String {
     val minuteString = if (minuteInt < 10) "0$minuteInt" else minuteInt.toString()
 
     return "$month/$day/$year $hourString:$minuteString $ampm"
+}
+
+fun updateLikes(newValue: Int, likes: MutableState<Int>, dislikes: MutableState<Int>) {
+    when (newValue) {
+        1 -> {
+            likes.value += 1
+            dislikes.value = maxOf(0, dislikes.value - 1)
+        }
+        0 -> {
+            likes.value = maxOf(0, likes.value - 1)
+        }
+        else -> {
+            // Reset or adjust according to your logic
+        }
+    }
+}
+
+fun updateDislikes(newValue: Int, likes: MutableState<Int>, dislikes: MutableState<Int>) {
+    when (newValue) {
+        -1 -> {
+            dislikes.value += 1
+            likes.value = maxOf(0, likes.value - 1)
+        }
+        0 -> {
+            dislikes.value = maxOf(0, dislikes.value - 1)
+        }
+        else -> {
+            // Reset or adjust according to your logic
+        }
+    }
 }

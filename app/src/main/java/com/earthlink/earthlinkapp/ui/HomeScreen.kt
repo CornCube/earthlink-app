@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material3.CardDefaults.cardElevation
@@ -24,15 +23,20 @@ import androidx.navigation.NavHostController
 import com.earthlink.earthlinkapp.R
 import com.earthlink.earthlinkapp.model.Message
 import com.earthlink.earthlinkapp.model.MessageListFormat
+import com.earthlink.earthlinkapp.model.ReactionData
 import com.earthlink.earthlinkapp.network.*
 import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getCurrentLocation
 import com.earthlink.earthlinkapp.utils.getFilterFlow
 import com.earthlink.earthlinkapp.utils.getThemeFlow
 import com.earthlink.earthlinkapp.utils.getUserFlow
+import com.earthlink.earthlinkapp.utils.updateDislikes
+import com.earthlink.earthlinkapp.utils.updateLikes
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -111,7 +115,7 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         val listener = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
                 getCurrentLocation(context) { location ->
-                    cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(location, 17f))
+                    cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(location, 18f))
                 }
             }
         }
@@ -160,10 +164,8 @@ fun Main(navigation: NavHostController, dataStore: DataStore<Preferences>, snack
         messages?.forEach { messageList ->
             Circle(
                 center = LatLng(messageList[it].latitude, messageList[it].longitude),
-                radius = 10.0, // radius in meters
+                radius = 5.0, // radius in meters
                 fillColor = Color.Red.copy(alpha = 0.5f),
-                strokePattern = listOf(Dash(10f), Gap(10f)),
-                strokeColor = Color.Black,
                 strokeWidth = 2f,
                 zIndex = 100f,
                 clickable = true,
@@ -281,7 +283,7 @@ fun LocationButton(cameraPositionState: CameraPositionState, context: Context) {
             getCurrentLocation(context) { location ->
                 coroutineScope.launch {
                     isMapCentered.value = true
-                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(location, 17f), 1000)
+                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(location, 18f), 1000)
                 }
             }
         },
@@ -392,6 +394,8 @@ fun InteractRow(message: MessageListFormat) {
     // variable 1 or -1. if 1, then it is liked. if -1, then it is disliked. only one can be true at a time, so only
     // one icon can be filled at a time
     var reaction by remember { mutableIntStateOf(0) }
+    val likes = remember { mutableIntStateOf(message.likes) }
+    val dislikes = remember { mutableIntStateOf(message.dislikes) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -401,11 +405,32 @@ fun InteractRow(message: MessageListFormat) {
                 painter = if (reaction == 1) painterResource(R.drawable.thumb_up_filled_24px) else painterResource(R.drawable.thumb_up_24px),
                 contentDescription = "Likes",
                 tint = Color(0xff8fa8ea),
-                modifier = Modifier.clickable { reaction = if (reaction == 1) 0 else 1 }
+                modifier = Modifier.clickable {
+                    val newValue = if (reaction == 1) 0 else 1
+                    reaction = newValue
+                    updateLikes(newValue, likes, dislikes)
+                    val reactionData = ReactionData(
+                        user_uid = message.user_uid,
+                        message_id = message.message_id,
+                        reaction_type = reaction,
+                        timestamp = message.timestamp
+                    )
+                    Log.d("ChangeReactions", reactionData.toString())
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val response = changeReactions(reactionData)
+                            response?.let {
+                                Log.d("ChangeReactions", it.toString())
+                            } ?: Log.d("ChangeReactions", "Response was successful")
+                        } catch (e: Exception) {
+                            Log.e("ChangeReactions", "Failed to change reactions", e)
+                        }
+                    }
+                }
             )
             Text(
                 modifier = Modifier.padding(start = 5.dp, top = 3.dp),
-                text = message.likes.toString(),
+                text = likes.value.toString(),
                 style = MaterialTheme.typography.labelLarge,
             )
         }
@@ -414,11 +439,33 @@ fun InteractRow(message: MessageListFormat) {
                 painter = if (reaction == -1) painterResource(R.drawable.thumb_down_filled_24px) else painterResource(R.drawable.thumb_down_24px),
                 contentDescription = "Dislikes",
                 tint = Color(0xffe57373),
-                modifier = Modifier.padding(start = 10.dp).clickable { reaction = if (reaction == -1) 0 else -1 },
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .clickable {
+                        val newValue = if (reaction == -1) 0 else -1
+                        reaction = newValue
+                        updateDislikes(newValue, likes, dislikes)
+                        val reactionData = ReactionData(
+                            user_uid = message.user_uid,
+                            message_id = message.message_id,
+                            reaction_type = reaction,
+                            timestamp = message.timestamp
+                        )
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                val response = changeReactions(reactionData)
+                                response?.let {
+                                    Log.d("ChangeReactions", it.toString())
+                                } ?: Log.d("ChangeReactions", "Response was successful")
+                            } catch (e: Exception) {
+                                Log.e("ChangeReactions", "Failed to change reactions", e)
+                            }
+                        }
+                    },
             )
             Text(
                 modifier = Modifier.padding(start = 5.dp, top = 3.dp),
-                text = message.dislikes.toString(),
+                text = dislikes.value.toString(),
                 style = MaterialTheme.typography.labelLarge
             )
         }

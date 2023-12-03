@@ -5,6 +5,8 @@ import com.earthlink.earthlinkapp.model.LoginResponse
 import com.earthlink.earthlinkapp.model.Message
 import com.earthlink.earthlinkapp.model.MessageListFormat
 import com.earthlink.earthlinkapp.model.PostMessageResponse
+import com.earthlink.earthlinkapp.model.ReactionData
+import com.earthlink.earthlinkapp.model.ReactionResponse
 import com.earthlink.earthlinkapp.model.SignUpData
 import com.earthlink.earthlinkapp.model.SignUpResponse
 import com.earthlink.earthlinkapp.model.ValidateResponse
@@ -144,6 +146,22 @@ suspend fun validateToken(token: String): ValidateResponse? {
 
     return try {
         val response = validateService.validateToken(token)
+        if(response.isSuccessful){
+            response.body()
+        } else {
+            null
+        }
+    } catch (e: Exception){
+        null
+    }
+}
+
+suspend fun changeReactions(reactionData: ReactionData): ReactionResponse? {
+    val retrofit = RetrofitHelper.getInstance()
+    val reactionService = retrofit.create(ApiService::class.java)
+
+    return try {
+        val response = reactionService.changeReactions(reactionData)
         if(response.isSuccessful){
             response.body()
         } else {
