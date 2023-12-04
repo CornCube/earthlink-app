@@ -35,6 +35,7 @@ import com.earthlink.earthlinkapp.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
 import com.earthlink.earthlinkapp.network.getMessagesFromUser
 import com.earthlink.earthlinkapp.network.deleteMessage
+import com.earthlink.earthlinkapp.network.getMessagesRadius
 import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getUserFlow
 import com.earthlink.earthlinkapp.utils.updateDislikes
@@ -45,7 +46,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
-    var posts by remember { mutableStateOf<Map<String, MessageListFormat>?>(null) }
+    var posts by remember { mutableStateOf<List<MessageListFormat>?>(null) }
+    var sortType by remember { mutableStateOf("Latest") }
     var refresh by remember { mutableStateOf(true) }
 
     val userFlow = getUserFlow(dataStore)
@@ -55,10 +57,18 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
         refresh = newRefresh
     }
 
+    val onSortTypeChange = { newSortType: String ->
+        sortType = newSortType
+    }
+
     LaunchedEffect(refresh) {
         if (refresh) {
             try {
-                posts = getMessagesFromUser(user)
+                posts = if (sortType == "Latest") {
+                    getMessagesFromUser(user, 0)
+                } else {
+                    getMessagesFromUser(user, 1)
+                }
             } catch (e: Exception) {
                 // Handle exceptions
             }
@@ -89,7 +99,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
                 UserMilestones()
             }
         }
-        Posts(posts, snackbarHostState, onRefreshChange)
+        Posts(posts, snackbarHostState, onRefreshChange, onSortTypeChange)
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         EditProfileButton(navigation = navigation)
@@ -211,21 +221,22 @@ fun UserMilestones() {
 data class Achievement(val name: String, val stats: String)
 
 val achievements = listOf(
+    Achievement("Post your first message", "1 point"),
     Achievement("Post 10 messages", "10 points"),
-    Achievement("Post 100 messages", "20 points"),
-    Achievement("Post 1000 messages", "30 points")
+    Achievement("Post 100 messages", "50 points")
 )
 @Composable
 fun Posts(
-    posts: Map<String, MessageListFormat>?,
+    posts: List<MessageListFormat>?,
     snackbarHostState: SnackbarHostState,
-    onRefreshChange: (Boolean) -> Unit
+    onRefreshChange: (Boolean) -> Unit,
+    onSortTypeChange: (String) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var searchText by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     val options = listOf("Likes", "Latest")
-    var selectedIndex by remember { mutableStateOf(0) }
+    var selectedIndex by remember { mutableIntStateOf(0) }
     var curOption by remember { mutableStateOf(options[0]) }
 
     Column(
@@ -277,6 +288,8 @@ fun Posts(
                                         duration = SnackbarDuration.Short
                                     )
                                 }
+                                onSortTypeChange(option)
+                                onRefreshChange(true)
                             })
                     }
                 }
@@ -293,18 +306,15 @@ fun Posts(
             PostCard(post, snackbarHostState, onRefreshChange)
         }
     }
-    SnackbarHost(
-        hostState = snackbarHostState,
-    )
 }
 
 @Composable
-fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostState: SnackbarHostState, onRefreshChange: (Boolean) -> Unit) {
+fun InteractRowProfile(post: MessageListFormat, snackbarHostState: SnackbarHostState, onRefreshChange: (Boolean) -> Unit) {
     // variable 1 or -1. if 1, then it is liked. if -1, then it is disliked. only one can be true at a time, so only
     // one icon can be filled at a time
     var reaction by remember { mutableIntStateOf(0) }
-    val likes = remember { mutableIntStateOf(post.value.likes) }
-    val dislikes = remember { mutableIntStateOf(post.value.dislikes) }
+    val likes = remember { mutableIntStateOf(post.likes) }
+    val dislikes = remember { mutableIntStateOf(post.dislikes) }
 
     var showDeleteSnackbar by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
@@ -321,10 +331,10 @@ fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostS
                 reaction = newValue
                 updateLikes(newValue, likes, dislikes)
                 val reactionData = ReactionData(
-                    user_uid = post.value.user_uid,
-                    message_id = post.key,
+                    user_uid = post.user_uid,
+                    message_id = post.message_id,
                     reaction_type = reaction,
-                    timestamp = post.value.timestamp
+                    timestamp = post.timestamp
                 )
                 Log.d("ChangeReactions", reactionData.toString())
                 CoroutineScope(Dispatchers.IO).launch {
@@ -355,10 +365,10 @@ fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostS
                     reaction = newValue
                     updateDislikes(newValue, likes, dislikes)
                     val reactionData = ReactionData(
-                        user_uid = post.key,
-                        message_id = post.value.message_id,
+                        user_uid = post.user_uid,
+                        message_id = post.message_id,
                         reaction_type = reaction,
-                        timestamp = post.value.timestamp
+                        timestamp = post.timestamp
                     )
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
@@ -387,7 +397,7 @@ fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostS
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             showDeleteSnackbar = true
-                            val response = deleteMessage(post.key)
+                            val response = deleteMessage(post.message_id)
                             response?.let {
                                 Log.d("user", it)
                             }
@@ -402,7 +412,7 @@ fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostS
             modifier = Modifier
                 .padding(start = 10.dp)
                 .clickable {
-                    val copy = AnnotatedString(post.value.message_content)
+                    val copy = AnnotatedString(post.message_content)
                     clipboardManager.setText(copy)
                 },
             painter = painterResource(R.drawable.content_paste_24px),
@@ -420,14 +430,14 @@ fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostS
 
 @Composable
 fun PostCard(
-    post: Map.Entry<String, MessageListFormat>,
+    post: MessageListFormat,
     snackbarHostState: SnackbarHostState,
     onRefreshChange: (Boolean) -> Unit,
 ) {
     val nameClicked = remember { mutableStateOf(false) }
-    val author = post.value.user_uid
-    val timestamp = formatTimestamp(post.value.timestamp)
-    val content = post.value.message_content
+    val author = post.user_uid
+    val timestamp = formatTimestamp(post.timestamp)
+    val content = post.message_content
 
     Box(
         modifier = Modifier

@@ -23,8 +23,8 @@ interface ApiService {
     @GET("/getMessagesByRadius/{latitude}/{longitude}/{max_number}/{sort_type}")
     fun getMessagesRadius(@Path("latitude") latitude: Double, @Path("longitude") longitude: Double, @Path("max_number") max_number: Int, @Path("sort_type") sort_type: Int,): Call<List<List<MessageListFormat>>>
 
-    @GET("/getMessagesFromUser/{user_uid}")
-    fun getMessagesFromUser(@Path("user_uid") user_uid: String): Call<Map<String, MessageListFormat>>
+    @GET("/getMessagesFromUser/{user_uid}/{sort_type}")
+    fun getMessagesFromUser(@Path("user_uid") user_uid: String, @Path("sort_type") sort_type: Int): Call<List<MessageListFormat>>
 
     @DELETE("/deleteMessage/{messageId}")
     fun deleteMessage(@Path("messageId") messageId: String): Call<String>

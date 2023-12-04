@@ -40,12 +40,12 @@ object RetrofitHelper {
     }
 }
 
-suspend fun getMessagesFromUser(user_uid: String): Map<String, MessageListFormat>? {
+suspend fun getMessagesFromUser(user_uid: String, sort_type: Int): List<MessageListFormat>? {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
 
     return try {
-        val response = messagesService.getMessagesFromUser(user_uid).awaitResponse()
+        val response = messagesService.getMessagesFromUser(user_uid, sort_type).awaitResponse()
         if (response.isSuccessful) {
             response.body()
         } else {
