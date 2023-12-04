@@ -29,12 +29,16 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.navigation.NavController
 import com.earthlink.earthlinkapp.R
 import com.earthlink.earthlinkapp.model.MessageListFormat
+import com.earthlink.earthlinkapp.model.ReactionData
+import com.earthlink.earthlinkapp.network.changeReactions
 import com.earthlink.earthlinkapp.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
 import com.earthlink.earthlinkapp.network.getMessagesFromUser
 import com.earthlink.earthlinkapp.network.deleteMessage
 import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getUserFlow
+import com.earthlink.earthlinkapp.utils.updateDislikes
+import com.earthlink.earthlinkapp.utils.updateLikes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -278,11 +282,7 @@ fun Posts(
                 }
             }
         }
-
-
-
     }
-
 
     Column(
         modifier = Modifier
@@ -297,88 +297,124 @@ fun Posts(
         hostState = snackbarHostState,
     )
 }
-// TODO: fix this
-@Composable
-fun DeleteButton(
-    messageId: String,
-    snackbarHostState: SnackbarHostState,
-    onRefreshChange: (Boolean) -> Unit,
-) {
-    var showDeleteSnackbar by remember { mutableStateOf(false) }
-
-    IconButton(
-        onClick = {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    showDeleteSnackbar = true
-                    val response = deleteMessage(messageId)
-                    response?.let {
-                        Log.d("user", it)
-                    }
-                } catch (e: Exception) {
-                    // Handle exceptions
-                }
-                onRefreshChange(true)
-            }
-        },
-        modifier = Modifier
-            .padding(start = 300.dp, top = 8.dp)
-            .fillMaxWidth(),
-        colors = IconButtonDefaults.iconButtonColors(contentColor = Color.Red),
-        content = {
-            Icon(
-                painter = painterResource(R.drawable.delete_24px),
-                contentDescription = "Delete Message"
-            )
-        }
-    )
-
-    LaunchedEffect(showDeleteSnackbar) {
-        if (showDeleteSnackbar) {
-            snackbarHostState.showSnackbar("Message deleted")
-            showDeleteSnackbar = false
-        }
-    }
-}
 
 @Composable
 fun InteractRowProfile(post: Map.Entry<String, MessageListFormat>, snackbarHostState: SnackbarHostState, onRefreshChange: (Boolean) -> Unit) {
     // variable 1 or -1. if 1, then it is liked. if -1, then it is disliked. only one can be true at a time, so only
     // one icon can be filled at a time
     var reaction by remember { mutableIntStateOf(0) }
+    val likes = remember { mutableIntStateOf(post.value.likes) }
+    val dislikes = remember { mutableIntStateOf(post.value.dislikes) }
+
+    var showDeleteSnackbar by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
 
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row {
-            Icon(
-                painter = if (reaction == 1) painterResource(R.drawable.thumb_up_filled_24px) else painterResource(R.drawable.thumb_up_24px),
-                contentDescription = "Likes",
-                tint = Color(0xff8fa8ea),
-                modifier = Modifier.clickable { reaction = if (reaction == 1) 0 else 1 }
-            )
-            Text(
-                modifier = Modifier.padding(start = 5.dp, top = 3.dp),
-                text = post.value.likes.toString(),
-                style = MaterialTheme.typography.labelLarge,
-            )
+        Icon(
+            painter = if (reaction == 1) painterResource(R.drawable.thumb_up_filled_24px) else painterResource(R.drawable.thumb_up_24px),
+            contentDescription = "Likes",
+            tint = Color(0xff8fa8ea),
+            modifier = Modifier.clickable {
+                val newValue = if (reaction == 1) 0 else 1
+                reaction = newValue
+                updateLikes(newValue, likes, dislikes)
+                val reactionData = ReactionData(
+                    user_uid = post.value.user_uid,
+                    message_id = post.key,
+                    reaction_type = reaction,
+                    timestamp = post.value.timestamp
+                )
+                Log.d("ChangeReactions", reactionData.toString())
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val response = changeReactions(reactionData)
+                        response?.let {
+                            Log.d("ChangeReactions", it.toString())
+                        } ?: Log.d("ChangeReactions", "Response was successful")
+                    } catch (e: Exception) {
+                        Log.e("ChangeReactions", "Failed to change reactions", e)
+                    }
+                }
+            }
+        )
+        Text(
+            modifier = Modifier.padding(start = 5.dp, top = 3.dp),
+            text = likes.value.toString(),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Icon(
+            painter = if (reaction == -1) painterResource(R.drawable.thumb_down_filled_24px) else painterResource(R.drawable.thumb_down_24px),
+            contentDescription = "Dislikes",
+            tint = Color(0xffe57373),
+            modifier = Modifier
+                .padding(start = 10.dp)
+                .clickable {
+                    val newValue = if (reaction == -1) 0 else -1
+                    reaction = newValue
+                    updateDislikes(newValue, likes, dislikes)
+                    val reactionData = ReactionData(
+                        user_uid = post.key,
+                        message_id = post.value.message_id,
+                        reaction_type = reaction,
+                        timestamp = post.value.timestamp
+                    )
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val response = changeReactions(reactionData)
+                            response?.let {
+                                Log.d("ChangeReactions", it.toString())
+                            } ?: Log.d("ChangeReactions", "Response was successful")
+                        } catch (e: Exception) {
+                            Log.e("ChangeReactions", "Failed to change reactions", e)
+                        }
+                    }
+                },
+        )
+        Text(
+            modifier = Modifier.padding(start = 5.dp, top = 3.dp),
+            text = dislikes.value.toString(),
+            style = MaterialTheme.typography.labelLarge
+        )
+        Spacer(Modifier.weight(1f))
+        Icon(
+            painter = painterResource(R.drawable.delete_24px),
+            contentDescription = "Delete",
+            tint = Color(0xffff7373),
+            modifier = Modifier
+                .clickable {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            showDeleteSnackbar = true
+                            val response = deleteMessage(post.key)
+                            response?.let {
+                                Log.d("user", it)
+                            }
+                        } catch (e: Exception) {
+                            // Handle exceptions
+                        }
+                        onRefreshChange(true)
+                    }
+                }
+        )
+        Icon(
+            modifier = Modifier
+                .padding(start = 10.dp)
+                .clickable {
+                    val copy = AnnotatedString(post.value.message_content)
+                    clipboardManager.setText(copy)
+                },
+            painter = painterResource(R.drawable.content_paste_24px),
+            contentDescription = "Copy",
+        )
+    }
+
+    LaunchedEffect(showDeleteSnackbar) {
+        if (showDeleteSnackbar) {
+            snackbarHostState.showSnackbar("Message deleted")
+            showDeleteSnackbar = false
         }
-        Row {
-            Icon(
-                painter = if (reaction == -1) painterResource(R.drawable.thumb_down_filled_24px) else painterResource(R.drawable.thumb_down_24px),
-                contentDescription = "Dislikes",
-                tint = Color(0xffe57373),
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .clickable { reaction = if (reaction == -1) 0 else -1 },
-            )
-            Text(
-                modifier = Modifier.padding(start = 5.dp, top = 3.dp),
-                text = post.value.dislikes.toString(),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-//        DeleteButton(post.key, snackbarHostState, onRefreshChange)
     }
 }
 
