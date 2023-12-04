@@ -29,17 +29,12 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.navigation.NavController
 import com.earthlink.earthlinkapp.R
 import com.earthlink.earthlinkapp.model.MessageListFormat
-import com.earthlink.earthlinkapp.model.ReactionData
-import com.earthlink.earthlinkapp.network.changeReactions
 import com.earthlink.earthlinkapp.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
 import com.earthlink.earthlinkapp.network.getMessagesFromUser
 import com.earthlink.earthlinkapp.network.deleteMessage
-import com.earthlink.earthlinkapp.network.getMessagesRadius
 import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getUserFlow
-import com.earthlink.earthlinkapp.utils.updateDislikes
-import com.earthlink.earthlinkapp.utils.updateLikes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -326,32 +321,10 @@ fun InteractRowProfile(post: MessageListFormat, snackbarHostState: SnackbarHostS
             painter = if (reaction == 1) painterResource(R.drawable.thumb_up_filled_24px) else painterResource(R.drawable.thumb_up_24px),
             contentDescription = "Likes",
             tint = Color(0xff8fa8ea),
-            modifier = Modifier.clickable {
-                val newValue = if (reaction == 1) 0 else 1
-                reaction = newValue
-                updateLikes(newValue, likes, dislikes)
-                val reactionData = ReactionData(
-                    user_uid = post.user_uid,
-                    message_id = post.message_id,
-                    reaction_type = reaction,
-                    timestamp = post.timestamp
-                )
-                Log.d("ChangeReactions", reactionData.toString())
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val response = changeReactions(reactionData)
-                        response?.let {
-                            Log.d("ChangeReactions", it.toString())
-                        } ?: Log.d("ChangeReactions", "Response was successful")
-                    } catch (e: Exception) {
-                        Log.e("ChangeReactions", "Failed to change reactions", e)
-                    }
-                }
-            }
         )
         Text(
             modifier = Modifier.padding(start = 5.dp, top = 3.dp),
-            text = likes.value.toString(),
+            text = post.likes.toString(),
             style = MaterialTheme.typography.labelLarge,
         )
         Icon(
@@ -360,27 +333,6 @@ fun InteractRowProfile(post: MessageListFormat, snackbarHostState: SnackbarHostS
             tint = Color(0xffe57373),
             modifier = Modifier
                 .padding(start = 10.dp)
-                .clickable {
-                    val newValue = if (reaction == -1) 0 else -1
-                    reaction = newValue
-                    updateDislikes(newValue, likes, dislikes)
-                    val reactionData = ReactionData(
-                        user_uid = post.user_uid,
-                        message_id = post.message_id,
-                        reaction_type = reaction,
-                        timestamp = post.timestamp
-                    )
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            val response = changeReactions(reactionData)
-                            response?.let {
-                                Log.d("ChangeReactions", it.toString())
-                            } ?: Log.d("ChangeReactions", "Response was successful")
-                        } catch (e: Exception) {
-                            Log.e("ChangeReactions", "Failed to change reactions", e)
-                        }
-                    }
-                },
         )
         Text(
             modifier = Modifier.padding(start = 5.dp, top = 3.dp),
