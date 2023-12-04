@@ -1,5 +1,8 @@
 package com.earthlink.earthlinkapp.ui
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.earthlink.earthlinkapp.utils.getThemeFlow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,7 +46,6 @@ fun SettingsScreen(navigation: NavController, dataStore: DataStore<Preferences>,
             Spacer(modifier = Modifier.height(verticalSpacing))
             Appearance(dataStore, snackbarHostState)
             FilterSettings(dataStore, snackbarHostState)
-            AccountSettings()
             HelpSupport()
             About()
             Spacer(modifier = Modifier.height(50.dp))
@@ -72,13 +75,6 @@ fun FilterSettings(dataStore: DataStore<Preferences>, snackbarHostState: Snackba
         allowProfanity = currentFilter
     }
 
-    // Pass the mutable state and its setter to the HelperCheckBox
-//    HelperCheckBox(
-//        text = "Allow Profanity",
-//        checked = allowProfanity,
-//        onCheckedChange = { allowProfanity = it }
-//    )
-
     val filterLabels = mapOf(0f to "No filter", 1f to "Partial filter", 2f to "Full filter")
 
     Slider(
@@ -97,15 +93,6 @@ fun FilterSettings(dataStore: DataStore<Preferences>, snackbarHostState: Snackba
     Spacer(Modifier.height(12.dp))
 }
 
-//Composable component for the account portion of the settings
-@Composable
-fun AccountSettings(){
-    SettingHeader(text = "Account")
-    HelperButton(text = "Change username/password")
-
-    Spacer(Modifier.height(12.dp))
-}
-
 //Composable component for the appearance portion of the settings
 @Composable
 fun Appearance(dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
@@ -119,18 +106,17 @@ fun Appearance(dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHos
 @Composable
 fun HelpSupport(){
     SettingHeader(text = "Help and Support")
-    HelperButton(text = "FAQ")
-    HelperButton(text = "Contact Support")
-    HelperButton(text = "Report")
+    HelperButton(text = "Delete Account", url = "https://corncube.github.io/")
+    HelperButton(text = "Contact Support", url = "https://corncube.github.io/")
+    HelperButton(text = "Report", url = "https://corncube.github.io/")
     Spacer(Modifier.height(12.dp))
 }
 
 //Composable component for the about portion of the settings
 @Composable
 fun About(){
-    SettingHeader(text = "About")
-    HelperButton(text = "Guidelines")
-    HelperButton(text = "Terms of Services")
+    SettingHeader(text = "About", )
+    HelperButton(text = "Privacy Policy", url = "https://www.freeprivacypolicy.com/live/9a90b822-5102-4297-b004-85ae5d438068")
 
     Spacer(Modifier.height(12.dp))
 }
@@ -146,13 +132,22 @@ fun SettingHeader(text: String){
 
 //Helper function that creates a button for style consistency
 @Composable
-fun HelperButton(text: String){
+fun HelperButton(text: String, url: String) {
+    val context = LocalContext.current
     OutlinedButton(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(30),
-        onClick = { /*TODO*/ }) {
+        onClick = {
+            openUrl(context, url)
+        }) {
         Text(text, fontSize = 18.sp)
     }
+}
+
+fun openUrl(context: Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data = Uri.parse(url)
+    context.startActivity(intent)
 }
 
 @Composable
@@ -164,7 +159,7 @@ fun HelperCheckBox(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }, // Add clickable modifier here
+            .clickable { onCheckedChange(!checked) },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -176,7 +171,7 @@ fun HelperCheckBox(
         Checkbox(
             modifier = Modifier.size(32.dp),
             checked = checked,
-            onCheckedChange = null // Remove the direct click action from the Checkbox
+            onCheckedChange = null
         )
     }
 }
@@ -221,11 +216,11 @@ fun ThemeRadioButton(themeName: String, selectedTheme: String, onThemeSelected: 
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onThemeSelected(themeName) } // Add clickable modifier here
+            .clickable { onThemeSelected(themeName) }
     ) {
         RadioButton(
             selected = selectedTheme == themeName,
-            onClick = null // Remove the direct click action from the RadioButton
+            onClick = null
         )
         Text(text = themeName)
     }
