@@ -15,7 +15,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -355,16 +357,45 @@ fun MessagePopup(onDismissRequest: () -> Unit, onPostClick: (message: String) ->
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Characters left: ${256 - textState.length}",
+                        style = TextStyle(fontSize = 12.sp, color = if (textState.length <= 256) Color.Gray else Color.Red)
+                    )
+                    IconButton(
+                        onClick = { textState = "" },
+                        enabled = textState.isNotEmpty(),
+                        modifier = Modifier.size(24.dp)
+
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.close_24px),
+                            contentDescription = "Clear Message",
+                            tint = if (textState.isNotEmpty()) Color.Gray else Color.Transparent
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.End) {
-                    Button(onClick = onDismissRequest) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextButton(
+                        onClick = onDismissRequest,
+                    ) {
                         Text("Cancel")
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        onPostClick(textState)
-                        onDismissRequest()
-                    }) {
+                    Button(
+                        onClick = {
+                            onPostClick(textState)
+                            onDismissRequest()
+                        },
+                        shape = MaterialTheme.shapes.small,
+                        enabled = textState.isNotEmpty()
+                    ) {
                         Text("Post")
                     }
                 }

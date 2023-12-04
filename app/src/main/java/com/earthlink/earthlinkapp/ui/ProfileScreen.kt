@@ -29,10 +29,12 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.navigation.NavController
 import com.earthlink.earthlinkapp.R
 import com.earthlink.earthlinkapp.model.MessageListFormat
+import com.earthlink.earthlinkapp.model.NumMessagesResponse
 import com.earthlink.earthlinkapp.utils.getBioFlow
 import kotlinx.coroutines.flow.Flow
 import com.earthlink.earthlinkapp.network.getMessagesFromUser
 import com.earthlink.earthlinkapp.network.deleteMessage
+import com.earthlink.earthlinkapp.network.getNumberMessages
 import com.earthlink.earthlinkapp.utils.formatTimestamp
 import com.earthlink.earthlinkapp.utils.getUserFlow
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +46,8 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
     var posts by remember { mutableStateOf<List<MessageListFormat>?>(null) }
     var search by remember { mutableStateOf("") }
     var sortType by remember { mutableStateOf("Latest") }
+    // should be of form NumMessagesResponse?
+    var numMessages by remember { mutableStateOf<NumMessagesResponse?>(null) }
     var refresh by remember { mutableStateOf(true) }
 
     val userFlow = getUserFlow(dataStore)
@@ -59,6 +63,15 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
 
     val onSortTypeChange = { newSortType: String ->
         sortType = newSortType
+    }
+
+    // check number of messages posted by user on first load
+    LaunchedEffect(user) {
+        try {
+            numMessages = getNumberMessages(user)
+        } catch (e: Exception) {
+            // Handle exceptions
+        }
     }
 
     LaunchedEffect(refresh) {
@@ -96,7 +109,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
                 modifier = Modifier.padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                UserMilestones()
+                numMessages?.let { UserMilestones(it) }
             }
         }
         Posts(posts, snackbarHostState, onRefreshChange, onSortTypeChange, onSearchChange)
@@ -156,11 +169,11 @@ fun UserInfo(dataStore: DataStore<Preferences>, user: String) {
             style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 30.sp)
         )
         Text(
-            text = "User Since: 11-06-2023",
+            text = "User Since: 12-05-2023",
             style = TextStyle(fontSize = 16.sp)
         )
         Text(
-            text = bio,
+            text = if (bio == "") "Click here to enter bio:" else bio,
             style = TextStyle(fontSize = 20.sp)
         )
     }
@@ -168,15 +181,11 @@ fun UserInfo(dataStore: DataStore<Preferences>, user: String) {
 
 @Composable
 fun EditProfileButton(navigation: NavController) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val screenHeight = configuration.screenHeightDp.dp
-    FloatingActionButton(
+    IconButton(
         onClick = { navigation.navigate("EditProfileScreen") },
         modifier = Modifier
-            .padding(top = 48.dp, end = 16.dp)
+            .padding(top = 70.dp, end = 16.dp)
             .testTag("editProfileButton"), // Adding a test tag
-        containerColor = Color(0xff99b1ed),
     ) {
         Icon(
             painter = painterResource(R.drawable.edit_24px),
@@ -186,12 +195,20 @@ fun EditProfileButton(navigation: NavController) {
 }
 
 @Composable
-fun UserMilestones() {
+fun UserMilestones(numMessages: NumMessagesResponse) {
     LazyColumn {
         item {
             Text("User Milestones", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         }
         items(achievements) { achievement ->
+            if (achievement.name == "Post your first message" && numMessages.number_messages >= 1) {
+                achievement.complete = true
+            } else if (achievement.name == "Post 10 messages" && numMessages.number_messages >= 10) {
+                achievement.complete = true
+            } else if (achievement.name == "Post 100 messages" && numMessages.number_messages >= 100) {
+                achievement.complete = true
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -199,7 +216,8 @@ fun UserMilestones() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.trophy_24px),
+                    painter = if (achievement.complete) painterResource(R.drawable.trophy_filled_24px) else painterResource(R.drawable.trophy_24px),
+                    tint = if (achievement.complete) Color(0xfffcba03) else MaterialTheme.colorScheme.onSurface,
                     contentDescription = "Achievement Icon",
                     modifier = Modifier.size(24.dp)
                 )
@@ -218,7 +236,7 @@ fun UserMilestones() {
     }
 }
 
-data class Achievement(val name: String, val stats: String)
+data class Achievement(val name: String, val stats: String, var complete: Boolean = false)
 
 val achievements = listOf(
     Achievement("Post your first message", "1 point"),

@@ -38,3 +38,7 @@ data class ReactionData(
 data class ReactionResponse(
     val message: String
 )
+
+data class NumMessagesResponse(
+    val number_messages: Int
+)

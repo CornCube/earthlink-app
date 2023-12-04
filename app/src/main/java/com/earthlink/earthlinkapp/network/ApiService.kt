@@ -4,6 +4,7 @@ import com.earthlink.earthlinkapp.model.LoginData
 import com.earthlink.earthlinkapp.model.LoginResponse
 import com.earthlink.earthlinkapp.model.Message
 import com.earthlink.earthlinkapp.model.MessageListFormat
+import com.earthlink.earthlinkapp.model.NumMessagesResponse
 import com.earthlink.earthlinkapp.model.PostMessageResponse
 import com.earthlink.earthlinkapp.model.ReactionData
 import com.earthlink.earthlinkapp.model.ReactionResponse
@@ -30,6 +31,9 @@ interface ApiService {
     // /getMessagesFromUser/ZypmwBRVUgXHB2b255d4Dq2pdmw2/0
     @GET("/getMessagesFromUser/{user_uid}/{sort_type}")
     fun getMessagesFromUser(@Path("user_uid") user_uid: String, @Path("sort_type") sort_type: Int, @Query("search_term") search_term: String?): Call<List<MessageListFormat>>
+
+    @GET("/getNumberMessages/{user_uid}")
+    fun getNumberMessages(@Path("user_uid") user_uid: String): Call<NumMessagesResponse>
 
     @DELETE("/deleteMessage/{messageId}")
     fun deleteMessage(@Path("messageId") messageId: String): Call<String>

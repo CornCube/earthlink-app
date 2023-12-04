@@ -4,6 +4,7 @@ import com.earthlink.earthlinkapp.model.LoginData
 import com.earthlink.earthlinkapp.model.LoginResponse
 import com.earthlink.earthlinkapp.model.Message
 import com.earthlink.earthlinkapp.model.MessageListFormat
+import com.earthlink.earthlinkapp.model.NumMessagesResponse
 import com.earthlink.earthlinkapp.model.PostMessageResponse
 import com.earthlink.earthlinkapp.model.ReactionData
 import com.earthlink.earthlinkapp.model.ReactionResponse
@@ -162,6 +163,22 @@ suspend fun changeReactions(reactionData: ReactionData): ReactionResponse? {
 
     return try {
         val response = reactionService.changeReactions(reactionData)
+        if(response.isSuccessful){
+            response.body()
+        } else {
+            null
+        }
+    } catch (e: Exception){
+        null
+    }
+}
+
+suspend fun getNumberMessages(user_uid: String): NumMessagesResponse? {
+    val retrofit = RetrofitHelper.getInstance()
+    val numberMessagesService = retrofit.create(ApiService::class.java)
+
+    return try {
+        val response = numberMessagesService.getNumberMessages(user_uid).awaitResponse()
         if(response.isSuccessful){
             response.body()
         } else {
