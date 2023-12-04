@@ -18,13 +18,18 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
     @GET("/getMessagesByRadius/{latitude}/{longitude}/{max_number}/{sort_type}")
     fun getMessagesRadius(@Path("latitude") latitude: Double, @Path("longitude") longitude: Double, @Path("max_number") max_number: Int, @Path("sort_type") sort_type: Int,): Call<List<List<MessageListFormat>>>
 
+    // theres a user_uid, a sort_type, and a query parameter. it can be used like:
+    // /getMessagesFromUser/ZypmwBRVUgXHB2b255d4Dq2pdmw2/0?search_term=hello
+    // or
+    // /getMessagesFromUser/ZypmwBRVUgXHB2b255d4Dq2pdmw2/0
     @GET("/getMessagesFromUser/{user_uid}/{sort_type}")
-    fun getMessagesFromUser(@Path("user_uid") user_uid: String, @Path("sort_type") sort_type: Int): Call<List<MessageListFormat>>
+    fun getMessagesFromUser(@Path("user_uid") user_uid: String, @Path("sort_type") sort_type: Int, @Query("search_term") search_term: String?): Call<List<MessageListFormat>>
 
     @DELETE("/deleteMessage/{messageId}")
     fun deleteMessage(@Path("messageId") messageId: String): Call<String>

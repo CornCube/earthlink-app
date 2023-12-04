@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, snackbarHostState: SnackbarHostState) {
     var posts by remember { mutableStateOf<List<MessageListFormat>?>(null) }
+    var search by remember { mutableStateOf("") }
     var sortType by remember { mutableStateOf("Latest") }
     var refresh by remember { mutableStateOf(true) }
 
@@ -52,6 +53,10 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
         refresh = newRefresh
     }
 
+    val onSearchChange = { newSearch: String ->
+        search = newSearch
+    }
+
     val onSortTypeChange = { newSortType: String ->
         sortType = newSortType
     }
@@ -59,10 +64,10 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
     LaunchedEffect(refresh) {
         if (refresh) {
             try {
-                posts = if (sortType == "Latest") {
-                    getMessagesFromUser(user, 0)
+                if (search == "") {
+                    posts = getMessagesFromUser(user, if (sortType == "Likes") 1 else 0)
                 } else {
-                    getMessagesFromUser(user, 1)
+                    posts = getMessagesFromUser(user, if (sortType == "Likes") 1 else 0, search)
                 }
             } catch (e: Exception) {
                 // Handle exceptions
@@ -94,7 +99,7 @@ fun ProfileScreen(navigation: NavController, dataStore: DataStore<Preferences>, 
                 UserMilestones()
             }
         }
-        Posts(posts, snackbarHostState, onRefreshChange, onSortTypeChange)
+        Posts(posts, snackbarHostState, onRefreshChange, onSortTypeChange, onSearchChange)
     }
     Box (Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         EditProfileButton(navigation = navigation)
@@ -226,6 +231,7 @@ fun Posts(
     snackbarHostState: SnackbarHostState,
     onRefreshChange: (Boolean) -> Unit,
     onSortTypeChange: (String) -> Unit,
+    onSearchChange: (String) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var searchText by remember { mutableStateOf("") }
@@ -254,6 +260,20 @@ fun Posts(
                 onValueChange = { searchText = it },
                 label = { Text("Search messages") },
                 modifier = Modifier.weight(1f),
+            )
+            Icon(
+                painter = painterResource(R.drawable.search_24px),
+                contentDescription = "Search Icon",
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
+                    .clickable {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            onSearchChange(searchText)
+                            onRefreshChange(true)
+                        }
+                    }
             )
 
             // Wrap the button and the dropdown menu in a Box

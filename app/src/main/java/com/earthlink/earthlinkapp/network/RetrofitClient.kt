@@ -19,8 +19,8 @@ import retrofit2.awaitResponse
 
 object RetrofitHelper {
 
-//    val baseUrl = "http://EarthLinkAPI.us-west-2.elasticbeanstalk.com:80/"
-    val baseUrl = "http://10.0.2.2:8000/"
+    val baseUrl = "http://EarthLinkAPI.us-west-2.elasticbeanstalk.com:80/"
+//    val baseUrl = "http://10.0.2.2:8000/"
 
     fun getInstance(): Retrofit {
         // Create a logging interceptor
@@ -40,12 +40,12 @@ object RetrofitHelper {
     }
 }
 
-suspend fun getMessagesFromUser(user_uid: String, sort_type: Int): List<MessageListFormat>? {
+suspend fun getMessagesFromUser(user_uid: String, sort_type: Int, search_term: String? = null): List<MessageListFormat>? {
     val retrofit = RetrofitHelper.getInstance()
     val messagesService = retrofit.create(ApiService::class.java)
 
     return try {
-        val response = messagesService.getMessagesFromUser(user_uid, sort_type).awaitResponse()
+        val response = messagesService.getMessagesFromUser(user_uid, sort_type, search_term).awaitResponse()
         if (response.isSuccessful) {
             response.body()
         } else {
