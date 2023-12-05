@@ -10,3 +10,7 @@ This project is developed in Android Studio using Kotlin for Android.
 - One branch per feature
 - Keep commits atomic
 - Code review on pull requests
+
+Backend API Link:
+
+https://github.com/ShinBlake/EarthLinkAPI
